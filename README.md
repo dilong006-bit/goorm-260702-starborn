@@ -3,6 +3,8 @@
 날짜를 입력하면 그날의 NASA APOD(우주 사진)를 불러오고, Claude가 한국어 우주
 이야기를 생성해 공유 카드로 만들어 주는 웹앱.
 
+### 🌐 라이브: **https://starborn-one.vercel.app**
+
 - **Frontend**: React 18 + Vite 5 + TypeScript + Tailwind (우주 다크 테마)
 - **Backend**: Vercel Serverless Functions (`/api/*`) — 시크릿 격리
 - **DB/캐시**: Supabase (Postgres + RLS)
