@@ -22,7 +22,7 @@ export default function CosmicCard({
   onRetryStory,
 }: Props) {
   return (
-    <article className="w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-2xl shadow-cosmos-accent/10 backdrop-blur-xl">
+    <article className="glass animate-card-in w-full max-w-md overflow-hidden rounded-card shadow-e2">
       {/* 우주 이미지 */}
       <div className="relative aspect-square w-full bg-cosmos-900">
         {apod.imageUrl ? (
@@ -45,7 +45,7 @@ export default function CosmicCard({
 
       {/* 본문 */}
       <div className="space-y-4 p-6">
-        <p className="text-sm font-medium text-cosmos-glow">
+        <p className="num text-sm font-medium text-cosmos-glow">
           {formatDate(apod.date)}의 우주
         </p>
 

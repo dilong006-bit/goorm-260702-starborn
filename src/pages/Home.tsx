@@ -16,7 +16,11 @@ const FALLBACK_NOTICE: Record<string, string> = {
     "이 날의 우주는 영상이라, 가까운 날의 우주 이미지로 대신했어요.",
 };
 
-export default function Home() {
+export default function Home({
+  onOpenBirthday,
+}: {
+  onOpenBirthday: () => void;
+}) {
   const [apod, setApod] = useState<ApodResponse | null>(null);
   const [apodLoading, setApodLoading] = useState(true);
   const [apodError, setApodError] = useState(false);
@@ -98,13 +102,11 @@ export default function Home() {
             onRetryStory={() => void loadStory(apod.date)}
           />
 
-          {/* 다음 단계 예고 (작업 6에서 생일 입력 화면 연결) */}
           <button
-            disabled
-            className="mt-2 cursor-not-allowed rounded-full border border-white/10 px-6 py-2.5 text-sm text-slate-500"
-            title="다음 단계에서 열려요"
+            onClick={onOpenBirthday}
+            className="mt-2 rounded-control bg-cosmos-accent px-6 py-3 font-semibold text-white shadow-e1 transition hover:shadow-glow"
           >
-            🎂 내 생일의 우주 보기 (준비 중)
+            🎂 내 생일의 우주 보기
           </button>
         </div>
       )}

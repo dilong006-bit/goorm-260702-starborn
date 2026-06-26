@@ -11,3 +11,32 @@
     @apply min-h-screen bg-cosmos-950 bg-cosmos-radial text-slate-100 antialiased;
   }
 }
+
+@layer components {
+  /* glass는 떠 있는 표면(카드·컨트롤)에만 절제해서 사용 */
+  .glass {
+    @apply border border-white/10 bg-white/5 backdrop-blur-xl;
+  }
+  .glass-strong {
+    @apply border border-white/10 bg-white/[0.07] backdrop-blur-2xl;
+  }
+}
+
+@layer utilities {
+  /* 숫자(날짜 등) 표 정렬 — 폭 흔들림 제거 */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+}
+
+/* 모션 민감 사용자: 등장/반짝임 전부 off (접근성) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
