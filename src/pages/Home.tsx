@@ -1,0 +1,113 @@
+import { useCallback, useEffect, useState } from "react";
+import { getApod, getStory } from "../lib/api";
+import type { ApodResponse, Tone } from "../lib/types";
+import CosmicCard from "../components/CosmicCard";
+import Loader from "../components/Loader";
+
+const DEFAULT_TONE: Tone = "essay";
+
+// 폴백/클램프 코드 → 사용자 안내 문구
+const FALLBACK_NOTICE: Record<string, string> = {
+  today_not_published:
+    "아직 오늘의 우주가 공개 전이라, 가장 가까운 어제의 우주를 보여드려요.",
+  clamped_max: "미래 날짜는 볼 수 없어서 가장 최근의 우주를 보여드려요.",
+  clamped_min: "허블은 1995년부터 기록을 남겼어요. 가장 첫 우주를 보여드려요.",
+  video_replaced_with_adjacent_image:
+    "이 날의 우주는 영상이라, 가까운 날의 우주 이미지로 대신했어요.",
+};
+
+export default function Home() {
+  const [apod, setApod] = useState<ApodResponse | null>(null);
+  const [apodLoading, setApodLoading] = useState(true);
+  const [apodError, setApodError] = useState(false);
+
+  const [story, setStory] = useState<string | null>(null);
+  const [storyLoading, setStoryLoading] = useState(false);
+  const [storyError, setStoryError] = useState<string | null>(null);
+
+  const loadStory = useCallback(async (date: string) => {
+    setStoryLoading(true);
+    setStoryError(null);
+    try {
+      const res = await getStory(date, DEFAULT_TONE);
+      setStory(res.story);
+    } catch (e) {
+      setStoryError((e as Error).message || "story_failed");
+    } finally {
+      setStoryLoading(false);
+    }
+  }, []);
+
+  const loadToday = useCallback(async () => {
+    setApodLoading(true);
+    setApodError(false);
+    try {
+      const res = await getApod(); // 날짜 없음 = 오늘 (서버가 폴백 처리)
+      setApod(res);
+      void loadStory(res.date);
+    } catch {
+      setApodError(true);
+    } finally {
+      setApodLoading(false);
+    }
+  }, [loadStory]);
+
+  useEffect(() => {
+    void loadToday();
+  }, [loadToday]);
+
+  const notice = apod?.fallback ? FALLBACK_NOTICE[apod.fallback] : null;
+
+  return (
+    <main className="flex min-h-screen flex-col items-center px-5 py-10">
+      <header className="mb-8 text-center">
+        <p className="text-xs uppercase tracking-[0.3em] text-cosmos-glow/70">
+          Starborn
+        </p>
+        <h1 className="mt-1 bg-gradient-to-r from-cosmos-glow to-cosmos-accent bg-clip-text text-3xl font-bold text-transparent sm:text-4xl">
+          오늘의 우주
+        </h1>
+      </header>
+
+      {apodLoading ? (
+        <Loader label="오늘의 우주를 불러오는 중…" />
+      ) : apodError || !apod ? (
+        <div className="mt-10 flex flex-col items-center gap-4 text-center">
+          <p className="text-slate-300">
+            우주를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.
+          </p>
+          <button
+            onClick={() => void loadToday()}
+            className="rounded-full border border-white/20 px-5 py-2 text-sm text-slate-200 transition hover:bg-white/10"
+          >
+            다시 시도
+          </button>
+        </div>
+      ) : (
+        <div className="flex w-full flex-col items-center gap-5">
+          {notice && (
+            <p className="max-w-md rounded-2xl border border-cosmos-accent/30 bg-cosmos-accent/10 px-4 py-2 text-center text-sm text-cosmos-glow">
+              {notice}
+            </p>
+          )}
+          <CosmicCard
+            apod={apod}
+            story={story}
+            storyLoading={storyLoading}
+            storyError={storyError}
+            onRetryStory={() => void loadStory(apod.date)}
+          />
+
+          {/* 다음 단계 예고 (작업 6에서 생일 입력 화면 연결) */}
+          <button
+            disabled
+            className="mt-2 cursor-not-allowed rounded-full border border-white/10 px-6 py-2.5 text-sm text-slate-500"
+            title="다음 단계에서 열려요"
+          >
+            🎂 내 생일의 우주 보기 (준비 중)
+          </button>
+        </div>
+      )}
+    </main>
+  );
+}
