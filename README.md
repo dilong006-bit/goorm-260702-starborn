@@ -15,12 +15,20 @@
 
 ```bash
 npm install
-npm run dev      # ⚠️ vercel dev — /api 서버리스 함수까지 함께 실행
+npm run dev      # http://localhost:5173 — 프론트 + /api 서버리스 함수 한 번에
 ```
 
-> `npm run vite`는 순수 프론트만 확인하는 보조 스크립트입니다. `/api`는 동작하지
-> 않으므로 실제 개발은 반드시 `npm run dev`(= `vercel dev`)를 사용하세요.
-> Vercel CLI가 필요합니다: `npm i -g vercel`
+> **로컬은 `npm run dev`(Vite) 하나면 됩니다.** `vite.config.ts`의 `vercel-api-dev`
+> 플러그인이 `/api/*` 요청을 받으면 `api/*.js` 핸들러를 in-process로 실행합니다.
+> `.env.local`의 값은 서버 측 `process.env`로만 주입되어 클라이언트 번들엔 포함되지
+> 않습니다(시크릿 안전).
+>
+> 프로덕션(Vercel 클라우드)에서는 `api/*.js`가 그대로 서버리스 함수로 실행됩니다 —
+> 코드 변경 없이 동일하게 동작합니다.
+>
+> 참고: 로컬에서 `vercel dev`는 이 환경에서 함수 서버를 띄우지 못해(“Retrieving
+> project”에서 멈춤) 사용하지 않습니다. `npm start`(=`vercel dev`)는 남겨두었지만
+> 권장 경로는 `npm run dev` 입니다.
 
 ---
 
