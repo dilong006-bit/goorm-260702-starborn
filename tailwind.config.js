@@ -62,12 +62,26 @@ export default {
         shimmer: {
           "100%": { transform: "translateX(100%)" },
         },
+        // C1 저장 만족감 · C4 젤리 프레스
+        savePop: {
+          "0%": { transform: "scale(1)" },
+          "40%": { transform: "scale(1.12)" },
+          "100%": { transform: "scale(1)" },
+        },
+        jelly: {
+          "0%": { transform: "scale(1)" },
+          "30%": { transform: "scale(.94)" },
+          "60%": { transform: "scale(1.03)" },
+          "100%": { transform: "scale(1)" },
+        },
       },
       animation: {
         "card-in": "cardIn .5s cubic-bezier(.2,0,0,1) both",
         "rise-in": "riseIn .42s cubic-bezier(.2,0,0,1) both",
         twinkle: "twinkle 1.6s ease-in-out infinite",
         shimmer: "shimmer 1.4s infinite",
+        "save-pop": "savePop .32s cubic-bezier(.3,0,0,1) both",
+        jelly: "jelly .28s cubic-bezier(.3,0,0,1) both",
       },
     },
   },

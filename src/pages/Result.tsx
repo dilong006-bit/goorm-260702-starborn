@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getApod, getStory } from "../lib/api";
-import type { ApodResponse, Tone } from "../lib/types";
+import type { ApodResponse, SavedUniverse, Tone } from "../lib/types";
 import CosmicCard from "../components/CosmicCard";
 import ToneToggle from "../components/ToneToggle";
+import ShareActionBar from "../components/ShareActionBar";
 import Loader from "../components/Loader";
 
 const FALLBACK_NOTICE: Record<string, string> = {
@@ -33,6 +34,8 @@ export default function Result({ date, name, onBack, onHome }: Props) {
 
   // 톤 연타 race 방지: 최신 요청만 반영
   const reqId = useRef(0);
+  // 카드 캡처 루트(공유 이미지)
+  const cardRef = useRef<HTMLElement>(null);
 
   const loadStory = useCallback(
     async (apodDate: string, t: Tone) => {
@@ -112,12 +115,33 @@ export default function Result({ date, name, onBack, onHome }: Props) {
           <ToneToggle value={tone} onChange={onToneChange} disabled={storyLoading} />
 
           <CosmicCard
+            ref={cardRef}
             apod={apod}
             story={story}
             storyLoading={storyLoading}
             storyError={storyError}
             onRetryStory={() => void loadStory(apod.date, tone)}
           />
+
+          {/* ⭐저장 + 공유 (활성화 이벤트) — 스토리가 준비된 뒤에만 노출 */}
+          {story && !storyLoading && !storyError && (
+            <ShareActionBar
+              saved={{
+                id: `${date}:birthday`,
+                apodDate: apod.date,
+                inputDate: date,
+                occasion: "birthday",
+                name: name || undefined,
+                label: name || undefined,
+                tone,
+                title: apod.title,
+                imageUrl: apod.imageUrl,
+                story,
+                savedAt: "",
+              } satisfies SavedUniverse}
+              getNode={() => cardRef.current}
+            />
+          )}
 
           {/* 바이럴 루프 CTA */}
           <div className="mt-2 flex flex-col items-center gap-3">

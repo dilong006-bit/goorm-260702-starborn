@@ -1,4 +1,6 @@
+import { forwardRef } from "react";
 import type { ApodResponse } from "../lib/types";
+import { proxied } from "../lib/share";
 import Loader from "./Loader";
 
 interface Props {
@@ -14,23 +16,24 @@ function formatDate(iso: string) {
   return `${y}년 ${Number(m)}월 ${Number(d)}일`;
 }
 
-export default function CosmicCard({
-  apod,
-  story,
-  storyLoading,
-  storyError,
-  onRetryStory,
-}: Props) {
+const CosmicCard = forwardRef<HTMLElement, Props>(function CosmicCard(
+  { apod, story, storyLoading, storyError, onRetryStory },
+  ref
+) {
   return (
-    <article className="glass animate-card-in w-full max-w-md overflow-hidden rounded-card shadow-e2">
-      {/* 우주 이미지 */}
+    <article
+      ref={ref}
+      className="glass animate-card-in w-full max-w-md overflow-hidden rounded-card shadow-e2"
+    >
+      {/* 우주 이미지 (캡처 taint 방지: NASA 이미지는 프록시 경유) */}
       <div className="relative aspect-square w-full bg-cosmos-900">
         {apod.imageUrl ? (
           <img
-            src={apod.imageUrl}
+            src={proxied(apod.imageUrl) ?? undefined}
             alt={apod.title}
             className="h-full w-full object-cover"
             loading="eager"
+            crossOrigin="anonymous"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-slate-400">
@@ -78,8 +81,14 @@ export default function CosmicCard({
             {apod.copyright ? ` · © ${apod.copyright}` : ""}
           </p>
           <p>본 서비스는 NASA와 무관한 학습용 독립 프로젝트입니다.</p>
+          {/* 공유 이미지 워터마크 */}
+          <p className="mt-1 font-medium tracking-wide text-cosmos-glow/70">
+            Starborn · starborn-one.vercel.app
+          </p>
         </footer>
       </div>
     </article>
   );
-}
+});
+
+export default CosmicCard;
