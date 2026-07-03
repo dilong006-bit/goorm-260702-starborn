@@ -1,6 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 import type { SavedUniverse } from "./lib/types";
-import { hasCollection } from "./lib/collection";
+import {
+  hasCollection,
+  setCurrentUser,
+  migrateLocalToRemote,
+} from "./lib/collection";
+import { getCurrentSession, onAuthChange } from "./lib/auth";
+import { touchLastSeen } from "./lib/metrics";
 import Home from "./pages/Home";
 import Birthday from "./pages/Birthday";
 import Result from "./pages/Result";
@@ -8,6 +15,7 @@ import Collection from "./pages/Collection";
 import Detail from "./pages/Detail";
 import StarfieldBg from "./components/StarfieldBg";
 import TabBar, { type TabKey } from "./components/TabBar";
+import AuthSheet from "./components/AuthSheet";
 
 type View =
   | { name: "home" }
@@ -30,6 +38,33 @@ export default function App() {
   const [view, setView] = useState<View>(() =>
     hasCollection() ? { name: "home" } : { name: "input" }
   );
+  const [session, setSession] = useState<Session | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+
+  // 북극성 지표(F1.5): 방문 스탬프
+  useEffect(() => {
+    touchLastSeen();
+  }, []);
+
+  // 세션 초기화 + 변화 구독. 로그인 시 로컬→원격 마이그레이션.
+  useEffect(() => {
+    let mounted = true;
+    const apply = async (s: Session | null) => {
+      if (s?.user) {
+        setCurrentUser(s.user.id);
+        await migrateLocalToRemote(s.user.id);
+      } else {
+        setCurrentUser(null);
+      }
+      if (mounted) setSession(s);
+    };
+    void getCurrentSession().then(apply);
+    const unsub = onAuthChange((s) => void apply(s));
+    return () => {
+      mounted = false;
+      unsub();
+    };
+  }, []);
 
   const onNavigate = (key: TabKey) => {
     setView(
@@ -90,9 +125,28 @@ export default function App() {
   return (
     <div className="relative min-h-screen">
       <StarfieldBg />
-      {/* TabBar 높이만큼 하단 여백 확보(콘텐츠 가림 방지) */}
-      <div className={showTab ? "pb-20" : ""}>{page}</div>
+
+      {/* 계정/동기화 — 탭 화면에서만 우상단 고정 */}
+      {showTab && (
+        <button
+          onClick={() => setAuthOpen(true)}
+          className="glass fixed right-4 top-4 z-20 rounded-full px-3.5 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/10 active:animate-jelly"
+          aria-label={session ? "계정" : "동기화 로그인"}
+        >
+          {session ? "⭐ 동기화 중" : "🛰️ 동기화"}
+        </button>
+      )}
+
+      {/* 세션 전환 시 페이지 remount → 컬렉션 재조회 */}
+      <div key={session?.user?.id ?? "anon"} className={showTab ? "pb-20" : ""}>
+        {page}
+      </div>
+
       {showTab && <TabBar active={viewToTab(view.name)} onNavigate={onNavigate} />}
+
+      {authOpen && (
+        <AuthSheet session={session} onClose={() => setAuthOpen(false)} />
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { SavedUniverse } from "../lib/types";
 import { saveUniverse, removeUniverse, isSaved } from "../lib/collection";
+import { recordSave } from "../lib/metrics";
 import { deepLink, downloadCard, shareCard } from "../lib/share";
 import { tap } from "../lib/haptics";
 import Toast from "./Toast";
@@ -46,6 +47,7 @@ export default function ShareActionBar({ saved, getNode, showSave = true }: Prop
     tap([10, 30, 10]);
     await saveUniverse({ ...saved, savedAt: new Date().toISOString() });
     if (isSaved(saved.id)) {
+      recordSave();
       setToast("저장됨 ⭐");
     } else {
       // 저장 실패(프라이빗 모드 등) → 롤백

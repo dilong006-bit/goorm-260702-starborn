@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { DayType, MoodKey, SavedUniverse } from "../lib/types";
 import { MOODS, DAY_TYPES, REACTIONS } from "../lib/types";
 import { saveUniverse } from "../lib/collection";
+import { recordSave } from "../lib/metrics";
 import { tap } from "../lib/haptics";
 
 // Tailwind JIT가 감지하도록 mood 배경 클래스를 리터럴로 매핑
@@ -65,6 +66,7 @@ export default function SaveSheet({ base, onClose, onSaved }: Props) {
     };
     try {
       await saveUniverse(saved);
+      recordSave();
       onSaved(saved);
       onClose();
     } catch {
