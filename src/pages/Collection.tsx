@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Occasion, SavedUniverse } from "../lib/types";
-import { getCollection } from "../lib/collection";
+import { getCollection, getLocalCollection } from "../lib/collection";
 import CollectionCard from "../components/CollectionCard";
 import CollectionEmpty from "../components/CollectionEmpty";
 import StreakBadge from "../components/StreakBadge";
@@ -19,8 +19,19 @@ interface Props {
 }
 
 export default function Collection({ onBack, onAdd, onOpen }: Props) {
-  const all = useMemo(() => getCollection(), []);
+  // 즉시 미러로 첫 렌더 → 원격(로그인 시) 로드로 갱신
+  const [all, setAll] = useState<SavedUniverse[]>(() => getLocalCollection());
   const [filter, setFilter] = useState<Occasion | "all">("all");
+
+  useEffect(() => {
+    let alive = true;
+    void getCollection().then((list) => {
+      if (alive) setAll(list);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // 컬렉션에 실제로 존재하는 occasion만 필터 칩으로
   const occasions = useMemo(
