@@ -3,9 +3,15 @@
 날짜를 입력하면 그날의 NASA APOD(우주 사진)를 불러오고, Claude가 한국어 우주
 이야기를 생성해 공유 카드로 만들어 주는 웹앱.
 
-> **"카드 생성기 → 우주 저널"로 피벗 (Phase 1).** 한 번 만든 우주를 **⭐ 내 우주에
-> 저장**해 나만의 컬렉션으로 쌓고, 다시 감상·공유합니다. 활성화 이벤트 =
-> *"첫 우주를 컬렉션에 저장"*.
+> **"카드 생성기 → 우주 감정 일기"로 피벗.** 한 번 만든 우주를 **⭐ 내 우주에
+> 저장**하며 그날의 **감정(mood)·한 줄·하루 성격(dayType)**을 함께 기록해, 나만의
+> *감정 성좌*를 쌓아갑니다. 활성화 이벤트 = *"첫 우주를 컬렉션에 저장"*, 북극성 지표 =
+> *"저장 → 7일 내 재방문"*.
+>
+> **v2 Phase 1(감정 저널)**: 매직링크 로그인 + 클라우드 동기화(익명 localStorage ↔
+> Supabase) + SaveSheet(mood/한 줄/dayType/리액션). ⚠️ 로그인·동기화는
+> [Supabase 대시보드 설정](docs/phase1-supabase-setup.md) 후 활성화됩니다 —
+> **설정 전에도 앱은 익명 모드로 완전히 동작**합니다.
 
 ### 🌐 라이브: **https://starborn-one.vercel.app**
 
@@ -24,9 +30,13 @@
 | **톤 선택** | 감성 에세이 / 우주 운세 / 짧은 시 — 매번 다른 이야기 | ✅ |
 | **⭐ 내 우주에 저장** | 결과 카드를 로컬 컬렉션에 저장(활성화 이벤트) · optimistic · 저장 애니메이션 | ✅ |
 | **공유 · 이미지 · 링크** | 카드를 PNG로 내보내기(`html-to-image`) · Web Share · 딥링크 복사 | ✅ |
-| **내 우주 컬렉션** | 저장한 우주 bento 그리드 · occasion 필터 · 🔥연속 저장일 · 상세/삭제 | ✅ |
+| **내 우주 컬렉션** | 저장한 우주 bento 그리드 · occasion/dayType 필터 · 🔥연속 저장일 · 상세/삭제 | ✅ |
 | **숨쉬는 우주 배경** | starfield(box-shadow·로드 0)+nebula 오브·breathe·Pretendard·glass 폴백 | ✅ |
 | **셸 · 첫 화면 분기** | 하단 TabBar(오늘·추가·내우주)·신규→추가/재방문→오늘·재방문 넛지 | ✅ |
+| **감정 기록(SaveSheet)** | 저장 시 mood 5·한 줄(≤140)·dayType 5·리액션 — story는 불변(별기) | ✅ |
+| **로그인·클라우드 동기화** | 매직링크 + 익명 localStorage ↔ Supabase 마이그레이션 (RLS) | ⚙️ 설정 후 |
+| 감정 성좌 · On This Day · 회고 | (Phase 2) | ⏳ |
+| 목소리 선택(멀티 LLM) · 스티커 · 추세 | (Phase 3) | ⏳ |
 
 **동작 방식**: 날짜 입력 → `/api/apod`가 NASA에서 그날 우주 사진을 가져오고
 (날짜 클램프·video/미발행 폴백·Supabase 캐싱) → `/api/story`가 사진의 제목·설명을
@@ -133,12 +143,13 @@ starborn/
 │  ├─ components/        # CosmicCard(캡처 ref) · ShareActionBar · Toast
 │  │                     # CollectionCard · CollectionEmpty · StreakBadge · OccasionTag
 │  │                     # StarfieldBg(숨쉬는 배경) · TabBar(오늘·추가·내우주)
+│  │                     # SaveSheet(mood/한줄/dayType) · AuthSheet(매직링크)
 │  │                     # ToneToggle · DateField · Loader
 │  ├─ pages/             # Home(오늘) · Birthday(입력) · Result(결과)
 │  │                     # Collection(내 우주) · Detail(우주 상세)
 │  ├─ lib/               # api.ts · types.ts · supabaseClient.ts
-│  │                     # collection.ts(저장/스트릭) · share.ts(PNG/공유/딥링크)
-│  │                     # calm.ts(감각 설정) · haptics.ts(진동)
+│  │                     # collection.ts(async 어댑터: 로컬↔Supabase) · auth.ts(매직링크)
+│  │                     # metrics.ts(북극성 지표) · share.ts · calm.ts · haptics.ts
 │  ├─ App.tsx            # 뷰 상태기(home→input→result / collection→detail)
 │  └─ main.tsx
 ├─ vite.config.ts        # vercel-api-dev 플러그인(로컬 /api 실행)
