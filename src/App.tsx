@@ -1,10 +1,12 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { SavedUniverse } from "./lib/types";
 import {
   hasCollection,
   setCurrentUser,
   migrateLocalToRemote,
+  getCollection,
+  clearLocalMirror,
 } from "./lib/collection";
 import { getCurrentSession, onAuthChange } from "./lib/auth";
 import { touchLastSeen } from "./lib/metrics";
@@ -43,12 +45,23 @@ function viewToTab(name: View["name"]): TabKey {
 }
 
 export default function App() {
-  // 첫 화면 분기: 컬렉션 없으면 add(입력)로 착지(아하 거리), 있으면 today.
-  const [view, setView] = useState<View>(() =>
-    hasCollection() ? { name: "home" } : { name: "input" }
-  );
+  // 첫 화면 분기:
+  //  - 공유 딥링크(?date=YYYY-MM-DD) → 그날의 우주(result)로 착지
+  //  - 아니면 컬렉션 없으면 add(입력), 있으면 today
+  const [view, setView] = useState<View>(() => {
+    try {
+      const d = new URLSearchParams(window.location.search).get("date");
+      if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+        return { name: "result", date: d, userName: "" };
+      }
+    } catch {
+      /* 무시 */
+    }
+    return hasCollection() ? { name: "home" } : { name: "input" };
+  });
   const [session, setSession] = useState<Session | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  const prevUser = useRef<string | null>(null);
 
   // 북극성 지표(F1.5): 방문 스탬프
   useEffect(() => {
@@ -59,12 +72,17 @@ export default function App() {
   useEffect(() => {
     let mounted = true;
     const apply = async (s: Session | null) => {
-      if (s?.user) {
-        setCurrentUser(s.user.id);
-        await migrateLocalToRemote(s.user.id);
+      const uid = s?.user?.id ?? null;
+      if (uid) {
+        setCurrentUser(uid);
+        await migrateLocalToRemote(uid);
+        void getCollection(); // 클라우드→미러 워밍(멀티기기 스트릭/On This Day 정합)
       } else {
         setCurrentUser(null);
+        // 로그아웃 전환에서만 미러 비우기(초기 무세션 로드에선 익명 데이터 보존)
+        if (prevUser.current) clearLocalMirror();
       }
+      prevUser.current = uid;
       if (mounted) setSession(s);
     };
     void getCurrentSession().then(apply);

@@ -21,6 +21,19 @@ export function setCurrentUser(userId: string | null): void {
   currentUserId = userId;
 }
 
+/**
+ * 로컬 미러 비우기 — 로그아웃 전환 시 호출(공유 기기 보호).
+ * 클라우드 데이터는 재로그인으로 복원되므로 안전. 순수 익명 사용자는 로그아웃이 없어 영향 없음.
+ */
+export function clearLocalMirror(): void {
+  try {
+    localStorage.removeItem(KEY);
+    localStorage.removeItem(MIGRATED_KEY);
+  } catch {
+    // 무시
+  }
+}
+
 function useRemote(): boolean {
   return !!supabase && !!currentUserId;
 }
@@ -76,9 +89,11 @@ function toRow(u: SavedUniverse, userId: string): Record<string, any> {
     day_type: u.dayType ?? null,
     reactions: u.reactions ?? [],
     saved_at: u.savedAt || new Date().toISOString(),
-    // stickers/drawing은 값이 있을 때만 포함 → 마이그레이션 전에도 장식 없는 저장은 깨지지 않음
-    ...(u.stickers?.length ? { stickers: u.stickers } : {}),
-    ...(u.drawing?.length ? { drawing: u.drawing } : {}),
+    // stickers/drawing은 "정의됐을 때만" 포함:
+    //  - 새 저장(Result/SaveSheet)은 undefined → 생략 → 마이그레이션 전에도 안전
+    //  - 꾸미기 저장은 [](빈 배열 포함) 정의 → 포함 → 전체 삭제도 클라우드에 동기화
+    ...(u.stickers !== undefined ? { stickers: u.stickers } : {}),
+    ...(u.drawing !== undefined ? { drawing: u.drawing } : {}),
   };
 }
 
