@@ -63,6 +63,18 @@ export const DAY_TYPES: { key: DayType; label: string; emoji: string }[] = [
 /** 리액션(가장 가벼운 무드 기록) — 이모지 팔레트. */
 export const REACTIONS = ["⭐", "💫", "🌙", "☄️", "🌈", "🩵"] as const;
 
+/** 스티커(F3.2) — 카드 위 이모지 장식. x,y는 카드 대비 0..1 상대 좌표. */
+export interface Sticker {
+  emoji: string;
+  x: number;
+  y: number;
+}
+
+/** 스티커 팔레트. */
+export const STICKERS = [
+  "⭐", "🌙", "☄️", "🪐", "💫", "🌈", "🩵", "✨", "🌟", "🔭", "🚀", "🛸",
+] as const;
+
 /** localStorage에 저장되는 하나의 "우주" 저널 항목. */
 export interface SavedUniverse {
   /** `${inputDate}:${occasion}` 조합 키 — 무의존·중복 방지 */
@@ -92,6 +104,8 @@ export interface SavedUniverse {
   dayType?: DayType;
   /** 가장 가벼운 무드 기록 — 이모지 키 배열 */
   reactions?: string[];
+  /** F3.2 — 카드 위 스티커 장식(선택) */
+  stickers?: Sticker[];
 }
 
 /** 기간 회고(F2.3) — Claude 생성 요약. */

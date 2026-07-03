@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, type ReactNode } from "react";
 import type { ApodResponse } from "../lib/types";
 import { proxied } from "../lib/share";
 import Loader from "./Loader";
@@ -9,6 +9,8 @@ interface Props {
   storyLoading: boolean;
   storyError: string | null;
   onRetryStory?: () => void;
+  /** 카드 위 오버레이(스티커 레이어 등) — 캡처 루트 안에 렌더된다. */
+  overlay?: ReactNode;
 }
 
 function formatDate(iso: string) {
@@ -17,13 +19,13 @@ function formatDate(iso: string) {
 }
 
 const CosmicCard = forwardRef<HTMLElement, Props>(function CosmicCard(
-  { apod, story, storyLoading, storyError, onRetryStory },
+  { apod, story, storyLoading, storyError, onRetryStory, overlay },
   ref
 ) {
   return (
     <article
       ref={ref}
-      className="glass animate-card-in w-full max-w-md overflow-hidden rounded-card shadow-e2"
+      className="glass animate-card-in relative w-full max-w-md overflow-hidden rounded-card shadow-e2"
     >
       {/* 우주 이미지 (캡처 taint 방지: NASA 이미지는 프록시 경유) */}
       <div className="relative aspect-square w-full bg-cosmos-900">
@@ -87,6 +89,9 @@ const CosmicCard = forwardRef<HTMLElement, Props>(function CosmicCard(
           </p>
         </footer>
       </div>
+
+      {/* 스티커 등 오버레이 (캡처 루트 안) */}
+      {overlay}
     </article>
   );
 });

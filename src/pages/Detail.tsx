@@ -1,8 +1,10 @@
 import { useRef, useState } from "react";
-import type { ApodResponse, MoodKey, SavedUniverse } from "../lib/types";
-import { MOODS, DAY_TYPES } from "../lib/types";
-import { removeUniverse } from "../lib/collection";
+import type { ApodResponse, MoodKey, SavedUniverse, Sticker } from "../lib/types";
+import { MOODS, DAY_TYPES, STICKERS } from "../lib/types";
+import { removeUniverse, saveUniverse } from "../lib/collection";
+import { tap } from "../lib/haptics";
 import CosmicCard from "../components/CosmicCard";
+import StickerLayer from "../components/StickerLayer";
 import ShareActionBar from "../components/ShareActionBar";
 
 const MOOD_BG: Record<MoodKey, string> = {
@@ -23,6 +25,32 @@ interface Props {
 export default function Detail({ universe, onBack, onRemoved }: Props) {
   const cardRef = useRef<HTMLElement>(null);
   const [confirming, setConfirming] = useState(false);
+
+  // F3.2 스티커 꾸미기
+  const [editing, setEditing] = useState(false);
+  const [stickers, setStickers] = useState<Sticker[]>(universe.stickers ?? []);
+  const [savingDeco, setSavingDeco] = useState(false);
+
+  function addSticker(emoji: string) {
+    const n = stickers.length;
+    const x = Math.min(0.85, Math.max(0.15, 0.5 + ((n % 3) - 1) * 0.14));
+    const y = Math.min(0.85, Math.max(0.12, 0.3 + Math.floor(n / 3) * 0.14));
+    setStickers((prev) => [...prev, { emoji, x, y }]);
+    tap(6);
+  }
+
+  async function saveDeco() {
+    setSavingDeco(true);
+    await saveUniverse({ ...universe, stickers });
+    tap([10, 30, 10]);
+    setSavingDeco(false);
+    setEditing(false);
+  }
+
+  function cancelDeco() {
+    setStickers(universe.stickers ?? []);
+    setEditing(false);
+  }
 
   // 저장된 데이터로 CosmicCard 복원 — 재생성/재현성 0
   const apod: ApodResponse = {
@@ -65,8 +93,56 @@ export default function Detail({ universe, onBack, onRemoved }: Props) {
           story={universe.story}
           storyLoading={false}
           storyError={null}
+          overlay={
+            <StickerLayer
+              stickers={stickers}
+              editing={editing}
+              onMove={(i, x, y) =>
+                setStickers((prev) =>
+                  prev.map((s, j) => (j === i ? { ...s, x, y } : s))
+                )
+              }
+              onRemove={(i) =>
+                setStickers((prev) => prev.filter((_, j) => j !== i))
+              }
+            />
+          }
         />
 
+        {editing ? (
+          <div className="w-full max-w-md space-y-3">
+            <div className="glass flex flex-wrap justify-center gap-1.5 rounded-card p-3">
+              {STICKERS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => addSticker(s)}
+                  className="h-10 w-10 rounded-control text-xl transition hover:bg-white/10 active:animate-jelly"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            <p className="text-center text-xs text-slate-400">
+              스티커를 눌러 추가하고, 드래그해 옮기세요. ✕로 삭제.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={cancelDeco}
+                className="flex-1 rounded-control border border-white/15 px-4 py-2.5 text-sm text-slate-200 transition hover:bg-white/10"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => void saveDeco()}
+                disabled={savingDeco}
+                className="flex-1 rounded-control bg-cosmos-accent px-4 py-2.5 text-sm font-semibold text-white shadow-e1 transition hover:shadow-glow active:animate-jelly disabled:opacity-50"
+              >
+                {savingDeco ? "저장 중…" : "완료"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
         {/* 감정 저널(mood·한 줄·dayType·리액션) */}
         {hasJournal && (
           <div className="glass w-full max-w-md space-y-2 rounded-card p-4">
@@ -98,6 +174,13 @@ export default function Detail({ universe, onBack, onRemoved }: Props) {
 
         <ShareActionBar saved={universe} getNode={() => cardRef.current} />
 
+        <button
+          onClick={() => setEditing(true)}
+          className="text-sm text-cosmos-glow transition hover:text-white active:animate-jelly"
+        >
+          🎨 스티커로 꾸미기
+        </button>
+
         {confirming ? (
           <div className="flex items-center gap-3 text-sm">
             <span className="text-slate-300">이 우주를 지울까요?</span>
@@ -121,6 +204,8 @@ export default function Detail({ universe, onBack, onRemoved }: Props) {
           >
             컬렉션에서 삭제
           </button>
+        )}
+          </>
         )}
       </div>
     </main>

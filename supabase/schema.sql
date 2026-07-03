@@ -134,3 +134,9 @@ begin
       add constraint story_cache_apod_date_tone_voice_key unique (apod_date, tone, voice);
   end if;
 end $$;
+
+-- ============================================================
+-- v2 F3.2(스티커) — universes에 스티커 장식 컬럼 추가(additive, 재실행 안전)
+-- 미실행 시에도 스티커 없는 저장은 정상. 스티커를 붙인 저장의 클라우드 동기화만 이 컬럼 필요.
+-- ============================================================
+alter table universes add column if not exists stickers jsonb not null default '[]'::jsonb;
