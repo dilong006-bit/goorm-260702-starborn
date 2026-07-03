@@ -1,8 +1,17 @@
 import { useRef, useState } from "react";
-import type { ApodResponse, SavedUniverse } from "../lib/types";
+import type { ApodResponse, MoodKey, SavedUniverse } from "../lib/types";
+import { MOODS, DAY_TYPES } from "../lib/types";
 import { removeUniverse } from "../lib/collection";
 import CosmicCard from "../components/CosmicCard";
 import ShareActionBar from "../components/ShareActionBar";
+
+const MOOD_BG: Record<MoodKey, string> = {
+  radiant: "bg-mood-radiant",
+  calm: "bg-mood-calm",
+  drift: "bg-mood-drift",
+  cloudy: "bg-mood-cloudy",
+  storm: "bg-mood-storm",
+};
 
 interface Props {
   universe: SavedUniverse;
@@ -26,10 +35,19 @@ export default function Detail({ universe, onBack, onRemoved }: Props) {
     fallback: null,
   };
 
-  function onDelete() {
-    removeUniverse(universe.id);
+  async function onDelete() {
+    await removeUniverse(universe.id);
     onRemoved();
   }
+
+  const mood = universe.mood
+    ? MOODS.find((m) => m.key === universe.mood)
+    : null;
+  const dayType = universe.dayType
+    ? DAY_TYPES.find((d) => d.key === universe.dayType)
+    : null;
+  const hasJournal =
+    !!mood || !!universe.feelingNote || !!dayType || !!universe.reactions?.length;
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center px-5 py-10">
@@ -48,6 +66,35 @@ export default function Detail({ universe, onBack, onRemoved }: Props) {
           storyLoading={false}
           storyError={null}
         />
+
+        {/* 감정 저널(mood·한 줄·dayType·리액션) */}
+        {hasJournal && (
+          <div className="glass w-full max-w-md space-y-2 rounded-card p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              {mood && (
+                <span className="inline-flex items-center gap-1.5 text-sm text-slate-200">
+                  <span className={`h-2.5 w-2.5 rounded-full ${MOOD_BG[mood.key]}`} />
+                  {mood.label}
+                </span>
+              )}
+              {dayType && (
+                <span className="rounded-full border border-cosmos-accent/40 bg-cosmos-accent/10 px-2.5 py-0.5 text-xs text-cosmos-glow">
+                  {dayType.emoji} {dayType.label}
+                </span>
+              )}
+              {universe.reactions?.map((r) => (
+                <span key={r} className="text-sm">
+                  {r}
+                </span>
+              ))}
+            </div>
+            {universe.feelingNote && (
+              <p className="text-sm leading-relaxed text-slate-300">
+                “{universe.feelingNote}”
+              </p>
+            )}
+          </div>
+        )}
 
         <ShareActionBar saved={universe} getNode={() => cardRef.current} />
 

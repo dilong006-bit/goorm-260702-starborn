@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Occasion, SavedUniverse } from "../lib/types";
+import type { DayType, Occasion, SavedUniverse } from "../lib/types";
+import { DAY_TYPES } from "../lib/types";
 import { getCollection, getLocalCollection } from "../lib/collection";
 import CollectionCard from "../components/CollectionCard";
 import CollectionEmpty from "../components/CollectionEmpty";
@@ -12,6 +13,10 @@ const OCCASION_LABEL: Record<Occasion, string> = {
   custom: "특별한 날",
 };
 
+const DAYTYPE_LABEL: Record<DayType, string> = Object.fromEntries(
+  DAY_TYPES.map((d) => [d.key, `${d.emoji} ${d.label}`])
+) as Record<DayType, string>;
+
 interface Props {
   onBack: () => void;
   onAdd: () => void;
@@ -22,6 +27,7 @@ export default function Collection({ onBack, onAdd, onOpen }: Props) {
   // 즉시 미러로 첫 렌더 → 원격(로그인 시) 로드로 갱신
   const [all, setAll] = useState<SavedUniverse[]>(() => getLocalCollection());
   const [filter, setFilter] = useState<Occasion | "all">("all");
+  const [dayFilter, setDayFilter] = useState<DayType | "all">("all");
 
   useEffect(() => {
     let alive = true;
@@ -33,13 +39,24 @@ export default function Collection({ onBack, onAdd, onOpen }: Props) {
     };
   }, []);
 
-  // 컬렉션에 실제로 존재하는 occasion만 필터 칩으로
+  // 컬렉션에 실제로 존재하는 occasion / dayType만 필터 칩으로
   const occasions = useMemo(
     () => Array.from(new Set(all.map((u) => u.occasion))),
     [all]
   );
+  const dayTypes = useMemo(
+    () =>
+      Array.from(
+        new Set(all.map((u) => u.dayType).filter((d): d is DayType => !!d))
+      ),
+    [all]
+  );
 
-  const shown = filter === "all" ? all : all.filter((u) => u.occasion === filter);
+  const shown = all.filter(
+    (u) =>
+      (filter === "all" || u.occasion === filter) &&
+      (dayFilter === "all" || u.dayType === dayFilter)
+  );
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-5 py-10">
@@ -60,7 +77,7 @@ export default function Collection({ onBack, onAdd, onOpen }: Props) {
       ) : (
         <>
           {occasions.length > 1 && (
-            <div className="mb-5 flex flex-wrap gap-2">
+            <div className="mb-3 flex flex-wrap gap-2">
               <FilterChip
                 active={filter === "all"}
                 label="전체"
@@ -72,6 +89,24 @@ export default function Collection({ onBack, onAdd, onOpen }: Props) {
                   active={filter === o}
                   label={OCCASION_LABEL[o]}
                   onClick={() => setFilter(o)}
+                />
+              ))}
+            </div>
+          )}
+
+          {dayTypes.length > 0 && (
+            <div className="mb-5 flex flex-wrap gap-2">
+              <FilterChip
+                active={dayFilter === "all"}
+                label="모든 하루"
+                onClick={() => setDayFilter("all")}
+              />
+              {dayTypes.map((d) => (
+                <FilterChip
+                  key={d}
+                  active={dayFilter === d}
+                  label={DAYTYPE_LABEL[d]}
+                  onClick={() => setDayFilter(d)}
                 />
               ))}
             </div>
