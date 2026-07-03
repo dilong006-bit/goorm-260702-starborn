@@ -52,3 +52,68 @@ create policy "public read story" on story_cache for select using (true);
 -- 공유 이벤트는 익명 INSERT만 허용 (집계용), 조회는 차단
 drop policy if exists "anon insert share" on share_events;
 create policy "anon insert share" on share_events for insert with check (true);
+
+-- ============================================================
+-- v2 (감정 저널) — 유저 소유 데이터 · 로그인 필요 (기능명세서 v2 §3.2)
+-- 아래 블록을 SQL Editor에 붙여넣고 Run 하면 Phase 1 로그인/동기화가 준비됩니다.
+-- ============================================================
+
+-- 3.2.1 유저 저널(내 우주) — 유저 소유, RLS 격리
+create table if not exists universes (
+  id           text not null,                  -- SavedUniverse.id (`${inputDate}:${occasion}`)
+  user_id      uuid not null references auth.users(id) on delete cascade,
+  apod_date    date not null,
+  input_date   date not null,
+  occasion     text not null,
+  label        text,
+  name         text,
+  tone         text not null,
+  title        text not null,
+  image_url    text,
+  story        text not null,
+  mood         text,                            -- MoodKey
+  feeling_note text,                            -- ≤140
+  day_type     text,                            -- DayType
+  reactions    jsonb not null default '[]'::jsonb,
+  saved_at     timestamptz not null default now(),
+  primary key (user_id, id)                     -- 유저별 id 유니크(upsert 키)
+);
+create index if not exists idx_universes_user_date on universes(user_id, input_date desc);
+
+-- 3.2.2 회고(주간/월간)
+create table if not exists retrospectives (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid not null references auth.users(id) on delete cascade,
+  period       text not null,                   -- 'week' | 'month'
+  range_start  date not null,
+  range_end    date not null,
+  text         text not null,
+  mood_summary jsonb not null,
+  created_at   timestamptz not null default now()
+);
+
+-- 3.2.3 생성 로그(목소리/프로바이더 내부 A/B — 유저 비노출)
+create table if not exists generation_log (
+  id          uuid primary key default gen_random_uuid(),
+  apod_date   date,
+  tone        text,
+  provider    text,                             -- 'anthropic' | 'openai'
+  model       text,
+  voice       text,                             -- 'warm' | 'dreamy' | 'plain'
+  created_at  timestamptz not null default now()
+);
+
+-- 3.2.4 RLS — 유저 소유 격리
+alter table universes      enable row level security;
+alter table retrospectives enable row level security;
+alter table generation_log enable row level security;
+
+drop policy if exists "own universes" on universes;
+create policy "own universes" on universes
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "own retrospectives" on retrospectives;
+create policy "own retrospectives" on retrospectives
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- generation_log: 서버리스(service_role)만 INSERT, 유저 조회 차단(정책 없음 = 차단)

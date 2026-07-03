@@ -24,6 +24,14 @@ export default {
           today: "#a8b5ff",
           custom: "#a8b5ff",
         },
+        // 감정 축(mood) — 4색은 기존 팔레트 재사용, storm만 신규
+        mood: {
+          radiant: "#ffd479", // = cosmos-star
+          calm: "#a8b5ff", // = cosmos-glow
+          drift: "#7c6cff", // = cosmos-accent
+          cloudy: "#4f7cff", // = cosmos-nebula2
+          storm: "#5b4b9f", // 신규: 깊은 보라('무거운 날')
+        },
       },
       fontFamily: {
         sans: [
