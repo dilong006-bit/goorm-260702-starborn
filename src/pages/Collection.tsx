@@ -22,6 +22,7 @@ interface Props {
   onAdd: () => void;
   onOpen: (u: SavedUniverse) => void;
   onConstellation: () => void;
+  onRetrospective: () => void;
 }
 
 export default function Collection({
@@ -29,6 +30,7 @@ export default function Collection({
   onAdd,
   onOpen,
   onConstellation,
+  onRetrospective,
 }: Props) {
   // 즉시 미러로 첫 렌더 → 원격(로그인 시) 로드로 갱신
   const [all, setAll] = useState<SavedUniverse[]>(() => getLocalCollection());
@@ -82,12 +84,20 @@ export default function Collection({
         <CollectionEmpty onAdd={onAdd} />
       ) : (
         <>
-          <button
-            onClick={onConstellation}
-            className="mb-5 w-full rounded-control border border-cosmos-accent/30 bg-cosmos-accent/10 px-5 py-3 text-sm font-medium text-cosmos-glow transition hover:bg-cosmos-accent/15 active:animate-jelly"
-          >
-            ✨ 감정 성좌로 보기
-          </button>
+          <div className="mb-5 flex gap-2">
+            <button
+              onClick={onConstellation}
+              className="flex-1 rounded-control border border-cosmos-accent/30 bg-cosmos-accent/10 px-4 py-3 text-sm font-medium text-cosmos-glow transition hover:bg-cosmos-accent/15 active:animate-jelly"
+            >
+              ✨ 감정 성좌
+            </button>
+            <button
+              onClick={onRetrospective}
+              className="flex-1 rounded-control border border-cosmos-star/30 bg-cosmos-star/10 px-4 py-3 text-sm font-medium text-cosmos-star transition hover:bg-cosmos-star/15 active:animate-jelly"
+            >
+              🔭 우주적 회고
+            </button>
+          </div>
 
           {occasions.length > 1 && (
             <div className="mb-3 flex flex-wrap gap-2">

@@ -72,3 +72,38 @@ export async function upsertStoryCache(date, tone, storyText, model) {
     console.error("[supabaseAdmin] upsertStoryCache error:", error.message);
   }
 }
+
+// ── v2 회고(F2.3) ───────────────────────────────────────
+/** access_token(JWT) → user id. 유효하지 않으면 null. */
+export async function getUserIdFromToken(token) {
+  if (!admin || !token) return null;
+  const { data, error } = await admin.auth.getUser(token);
+  if (error || !data?.user) return null;
+  return data.user.id;
+}
+
+/** 기간 내(saved_at) 유저 우주 조회 — 회고 재료. */
+export async function getUniversesInRange(userId, startISO, endISO) {
+  if (!admin) return [];
+  const { data, error } = await admin
+    .from("universes")
+    .select("input_date, mood, day_type, feeling_note, title, saved_at")
+    .eq("user_id", userId)
+    .gte("saved_at", startISO)
+    .lte("saved_at", endISO)
+    .order("saved_at", { ascending: true });
+  if (error) {
+    console.error("[supabaseAdmin] getUniversesInRange error:", error.message);
+    return [];
+  }
+  return data || [];
+}
+
+/** 회고 저장. */
+export async function insertRetrospective(row) {
+  if (!admin) return;
+  const { error } = await admin.from("retrospectives").insert(row);
+  if (error) {
+    console.error("[supabaseAdmin] insertRetrospective error:", error.message);
+  }
+}

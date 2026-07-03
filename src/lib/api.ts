@@ -1,4 +1,4 @@
-import type { ApodResponse, StoryResponse, Tone } from "./types";
+import type { ApodResponse, MoodKey, StoryResponse, Tone } from "./types";
 
 async function parse<T>(res: Response): Promise<T> {
   let data: unknown = null;
@@ -34,4 +34,30 @@ export async function getStory(
     body: JSON.stringify({ date, tone, name }),
   });
   return parse<StoryResponse>(res);
+}
+
+export interface RetrospectiveResult {
+  empty: boolean;
+  period: "week" | "month";
+  rangeStart: string;
+  rangeEnd: string;
+  text?: string;
+  moodSummary?: Record<MoodKey, number>;
+  count?: number;
+}
+
+/** 기간 회고 생성(F2.3) — 로그인 access_token 필요. */
+export async function getRetrospective(
+  period: "week" | "month",
+  accessToken: string
+): Promise<RetrospectiveResult> {
+  const res = await fetch("/api/retrospective", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ period }),
+  });
+  return parse<RetrospectiveResult>(res);
 }

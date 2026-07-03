@@ -14,6 +14,7 @@ import Result from "./pages/Result";
 import Collection from "./pages/Collection";
 import Detail from "./pages/Detail";
 import Constellation from "./pages/Constellation";
+import Retrospective from "./pages/Retrospective";
 import StarfieldBg from "./components/StarfieldBg";
 import TabBar, { type TabKey } from "./components/TabBar";
 import AuthSheet from "./components/AuthSheet";
@@ -24,7 +25,8 @@ type View =
   | { name: "result"; date: string; userName: string }
   | { name: "collection" }
   | { name: "detail"; saved: SavedUniverse }
-  | { name: "constellation" };
+  | { name: "constellation" }
+  | { name: "retrospective" };
 
 // TabBar가 지속 노출되는 최상위 화면(오늘/추가/내우주). result·detail은 push(뒤로가기).
 const TAB_VIEWS = new Set(["home", "input", "collection"]);
@@ -109,6 +111,16 @@ export default function App() {
           onAdd={() => setView({ name: "input" })}
           onOpen={(saved) => setView({ name: "detail", saved })}
           onConstellation={() => setView({ name: "constellation" })}
+          onRetrospective={() => setView({ name: "retrospective" })}
+        />
+      );
+      break;
+    case "retrospective":
+      page = (
+        <Retrospective
+          session={session}
+          onBack={() => setView({ name: "collection" })}
+          onOpenAuth={() => setAuthOpen(true)}
         />
       );
       break;

@@ -69,3 +69,82 @@ export async function callClaude(title, explanation, tone) {
   }
   return { story, model };
 }
+
+// ── v2 회고(F2.3) ───────────────────────────────────────
+const MOOD_LABEL = {
+  radiant: "빛나는 날",
+  calm: "잔잔한 날",
+  drift: "무중력",
+  cloudy: "흐린 날",
+  storm: "무거운 날",
+};
+
+const RETRO_SYSTEM = `너는 사용자의 지난 기간 감정 기록을 다정하게 돌아봐주는 우주 저널 작가다.
+- 감정 분포와 짧은 메모를 바탕으로 사용자의 흐름을 따뜻하게 요약한다.
+- 판단·훈계·조언 강요 금지. 위로와 인정, 있는 그대로 바라봐 주는 어조.
+- 한국어 3~5문장, 우주적 이미지를 은은하게 곁들이되 과장 금지.
+- 마크다운/머리말/따옴표 없이 본문만 출력.`;
+
+/**
+ * 기간 회고 생성.
+ * @returns {Promise<{text:string, model:string}>}
+ * @throws code: ANTHROPIC_API_KEY_MISSING | CLAUDE_HTTP_<status> | CLAUDE_EMPTY
+ */
+export async function callRetrospective({ period, moodSummary, notes }) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    const e = new Error("ANTHROPIC_API_KEY_MISSING");
+    e.code = "ANTHROPIC_API_KEY_MISSING";
+    throw e;
+  }
+  const model = process.env.ANTHROPIC_MODEL || DEFAULT_MODEL;
+  const periodLabel = period === "month" ? "이번 달" : "이번 주";
+  const moodLine =
+    Object.entries(moodSummary || {})
+      .filter(([, c]) => c > 0)
+      .map(([k, c]) => `${MOOD_LABEL[k] || k} ${c}회`)
+      .join(", ") || "감정 기록 없음";
+  const notesText =
+    (notes || [])
+      .slice(0, 20)
+      .map((n) => `- ${String(n).slice(0, 140)}`)
+      .join("\n") || "(메모 없음)";
+
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 500,
+      system: RETRO_SYSTEM,
+      messages: [
+        {
+          role: "user",
+          content: `기간:${periodLabel}\n감정 분포:${moodLine}\n메모/제목:\n${notesText}`,
+        },
+      ],
+    }),
+  });
+
+  if (!r.ok) {
+    const e = new Error(`CLAUDE_HTTP_${r.status}`);
+    e.code = `CLAUDE_HTTP_${r.status}`;
+    throw e;
+  }
+  const data = await r.json();
+  const text = (data.content || [])
+    .filter((b) => b.type === "text")
+    .map((b) => b.text)
+    .join("")
+    .trim();
+  if (!text) {
+    const e = new Error("CLAUDE_EMPTY");
+    e.code = "CLAUDE_EMPTY";
+    throw e;
+  }
+  return { text, model };
+}
