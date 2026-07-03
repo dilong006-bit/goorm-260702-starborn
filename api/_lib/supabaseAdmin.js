@@ -45,14 +45,18 @@ export async function upsertApodCache(row) {
   }
 }
 
-/** story_cache 단건 조회 (date+tone). miss/오류/비활성 시 null. */
-export async function getStoryCache(date, tone) {
+/**
+ * story_cache 단건 조회 (date+tone+voice). miss/오류/비활성 시 null.
+ * ⚠️ voice 컬럼 마이그레이션(schema.sql v2 F3.1) 전에는 조회가 error → null(캐시 미적용)로 graceful.
+ */
+export async function getStoryCache(date, tone, voice = "warm") {
   if (!admin) return null;
   const { data, error } = await admin
     .from("story_cache")
     .select("*")
     .eq("apod_date", date)
     .eq("tone", tone)
+    .eq("voice", voice)
     .maybeSingle();
   if (error) {
     console.error("[supabaseAdmin] getStoryCache error:", error.message);
@@ -61,15 +65,24 @@ export async function getStoryCache(date, tone) {
   return data;
 }
 
-/** story_cache upsert(멱등). (apod_date, tone) unique 충돌은 무시. */
-export async function upsertStoryCache(date, tone, storyText, model) {
+/** story_cache upsert(멱등). (apod_date, tone, voice) unique 충돌은 무시. */
+export async function upsertStoryCache(date, tone, voice, storyText, model) {
   if (!admin) return;
   const { error } = await admin.from("story_cache").upsert(
-    { apod_date: date, tone, story_text: storyText, model },
-    { onConflict: "apod_date,tone", ignoreDuplicates: true }
+    { apod_date: date, tone, voice, story_text: storyText, model },
+    { onConflict: "apod_date,tone,voice", ignoreDuplicates: true }
   );
   if (error) {
     console.error("[supabaseAdmin] upsertStoryCache error:", error.message);
+  }
+}
+
+/** 생성 로그(F3.1 내부 A/B) — 실패해도 무시(fire-and-forget). */
+export async function insertGenerationLog(row) {
+  if (!admin) return;
+  const { error } = await admin.from("generation_log").insert(row);
+  if (error) {
+    console.error("[supabaseAdmin] insertGenerationLog error:", error.message);
   }
 }
 

@@ -117,3 +117,20 @@ create policy "own retrospectives" on retrospectives
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- generation_log: 서버리스(service_role)만 INSERT, 유저 조회 차단(정책 없음 = 차단)
+
+-- ============================================================
+-- v2 F3.1(목소리 선택) — story_cache 캐시 키에 voice 추가
+-- 캐시 키: (apod_date, tone) → (apod_date, tone, voice). 기본 voice='warm'.
+-- 재실행 안전(additive). 미실행 시에도 앱은 동작(단, voice별 캐시 미적용 = 매번 재생성).
+-- ============================================================
+alter table story_cache add column if not exists voice text not null default 'warm';
+alter table story_cache drop constraint if exists story_cache_apod_date_tone_key;
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'story_cache_apod_date_tone_voice_key'
+  ) then
+    alter table story_cache
+      add constraint story_cache_apod_date_tone_voice_key unique (apod_date, tone, voice);
+  end if;
+end $$;

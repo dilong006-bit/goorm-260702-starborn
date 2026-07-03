@@ -6,6 +6,15 @@ export const TONES: { key: Tone; label: string }[] = [
   { key: "poem", label: "짧은 시" },
 ];
 
+/** 목소리(문체) 축 — 톤과 직교(F3.1). 내부적으로 LLM 프로바이더에 매핑(사용자 비노출). */
+export type Voice = "warm" | "dreamy" | "plain";
+
+export const VOICES: { key: Voice; label: string; emoji: string }[] = [
+  { key: "warm", label: "따뜻하게", emoji: "🤍" },
+  { key: "dreamy", label: "몽환적으로", emoji: "🌙" },
+  { key: "plain", label: "담백하게", emoji: "🍃" },
+];
+
 export interface ApodResponse {
   date: string;
   title: string;
@@ -20,6 +29,7 @@ export interface ApodResponse {
 export interface StoryResponse {
   date: string;
   tone: Tone;
+  voice: Voice;
   story: string;
   cached: boolean;
   fallback: string | null;
@@ -65,6 +75,8 @@ export interface SavedUniverse {
   label?: string;
   name?: string;
   tone: Tone;
+  /** 생성 목소리(선택) — 스토리 스냅샷과 함께. */
+  voice?: Voice;
   title: string;
   imageUrl: string | null;
   story: string;
