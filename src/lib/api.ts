@@ -1,4 +1,4 @@
-import type { ApodResponse, MoodKey, StoryResponse, Tone } from "./types";
+import type { ApodResponse, MoodKey, StoryResponse, Tone, Voice } from "./types";
 
 async function parse<T>(res: Response): Promise<T> {
   let data: unknown = null;
@@ -26,12 +26,13 @@ export async function getApod(date?: string): Promise<ApodResponse> {
 export async function getStory(
   date: string,
   tone: Tone,
-  name?: string
+  name?: string,
+  voice: Voice = "warm"
 ): Promise<StoryResponse> {
   const res = await fetch("/api/story", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ date, tone, name }),
+    body: JSON.stringify({ date, tone, name, voice }),
   });
   return parse<StoryResponse>(res);
 }

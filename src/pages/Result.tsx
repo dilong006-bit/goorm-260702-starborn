@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getApod, getStory } from "../lib/api";
-import type { ApodResponse, SavedUniverse, Tone } from "../lib/types";
+import type { ApodResponse, SavedUniverse, Tone, Voice } from "../lib/types";
 import CosmicCard from "../components/CosmicCard";
 import ToneToggle from "../components/ToneToggle";
+import VoiceToggle from "../components/VoiceToggle";
 import ShareActionBar from "../components/ShareActionBar";
 import SaveSheet from "../components/SaveSheet";
 import Loader from "../components/Loader";
@@ -30,6 +31,7 @@ export default function Result({ date, name, onBack, onHome }: Props) {
   const [apodError, setApodError] = useState(false);
 
   const [tone, setTone] = useState<Tone>("essay");
+  const [voice, setVoice] = useState<Voice>("warm");
   const [story, setStory] = useState<string | null>(null);
   const [storyLoading, setStoryLoading] = useState(false);
   const [storyError, setStoryError] = useState<string | null>(null);
@@ -48,12 +50,12 @@ export default function Result({ date, name, onBack, onHome }: Props) {
   }, [savedId]);
 
   const loadStory = useCallback(
-    async (apodDate: string, t: Tone) => {
+    async (apodDate: string, t: Tone, v: Voice) => {
       const id = ++reqId.current;
       setStoryLoading(true);
       setStoryError(null);
       try {
-        const res = await getStory(apodDate, t, name || undefined);
+        const res = await getStory(apodDate, t, name || undefined, v);
         if (id === reqId.current) setStory(res.story);
       } catch (e) {
         if (id === reqId.current) setStoryError((e as Error).message);
@@ -70,7 +72,7 @@ export default function Result({ date, name, onBack, onHome }: Props) {
     try {
       const res = await getApod(date);
       setApod(res);
-      void loadStory(res.date, tone);
+      void loadStory(res.date, tone, voice);
     } catch {
       setApodError(true);
     } finally {
@@ -86,7 +88,13 @@ export default function Result({ date, name, onBack, onHome }: Props) {
   const onToneChange = (t: Tone) => {
     if (t === tone || !apod) return;
     setTone(t);
-    void loadStory(apod.date, t);
+    void loadStory(apod.date, t, voice);
+  };
+
+  const onVoiceChange = (v: Voice) => {
+    if (v === voice || !apod) return;
+    setVoice(v);
+    void loadStory(apod.date, tone, v);
   };
 
   const notice = apod?.fallback ? FALLBACK_NOTICE[apod.fallback] : null;
@@ -122,7 +130,10 @@ export default function Result({ date, name, onBack, onHome }: Props) {
             </p>
           )}
 
-          <ToneToggle value={tone} onChange={onToneChange} disabled={storyLoading} />
+          <div className="flex flex-col items-center gap-2">
+            <ToneToggle value={tone} onChange={onToneChange} disabled={storyLoading} />
+            <VoiceToggle value={voice} onChange={onVoiceChange} disabled={storyLoading} />
+          </div>
 
           <CosmicCard
             ref={cardRef}
@@ -130,7 +141,7 @@ export default function Result({ date, name, onBack, onHome }: Props) {
             story={story}
             storyLoading={storyLoading}
             storyError={storyError}
-            onRetryStory={() => void loadStory(apod.date, tone)}
+            onRetryStory={() => void loadStory(apod.date, tone, voice)}
           />
 
           {/* ⭐저장(SaveSheet) + 공유 (활성화 이벤트) — 스토리 준비 후에만 노출 */}
@@ -146,6 +157,7 @@ export default function Result({ date, name, onBack, onHome }: Props) {
                 name: name || undefined,
                 label: name || undefined,
                 tone,
+                voice,
                 title: apod.title,
                 imageUrl: apod.imageUrl,
                 story,
