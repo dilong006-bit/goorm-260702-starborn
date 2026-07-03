@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { SavedUniverse } from "./lib/types";
 import {
@@ -13,12 +13,15 @@ import Birthday from "./pages/Birthday";
 import Result from "./pages/Result";
 import Collection from "./pages/Collection";
 import Detail from "./pages/Detail";
-import Constellation from "./pages/Constellation";
-import Retrospective from "./pages/Retrospective";
-import Trends from "./pages/Trends";
 import StarfieldBg from "./components/StarfieldBg";
 import TabBar, { type TabKey } from "./components/TabBar";
 import AuthSheet from "./components/AuthSheet";
+import Loader from "./components/Loader";
+
+// 이차 화면은 지연 로드(초기 번들 경량화)
+const Constellation = lazy(() => import("./pages/Constellation"));
+const Retrospective = lazy(() => import("./pages/Retrospective"));
+const Trends = lazy(() => import("./pages/Trends"));
 
 type View =
   | { name: "home" }
@@ -173,7 +176,15 @@ export default function App() {
 
       {/* 세션 전환 시 페이지 remount → 컬렉션 재조회 */}
       <div key={session?.user?.id ?? "anon"} className={showTab ? "pb-20" : ""}>
-        {page}
+        <Suspense
+          fallback={
+            <div className="flex min-h-screen items-center justify-center">
+              <Loader label="불러오는 중…" />
+            </div>
+          }
+        >
+          {page}
+        </Suspense>
       </div>
 
       {showTab && <TabBar active={viewToTab(view.name)} onNavigate={onNavigate} />}
