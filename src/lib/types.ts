@@ -75,6 +75,16 @@ export const STICKERS = [
   "⭐", "🌙", "☄️", "🪐", "💫", "🌈", "🩵", "✨", "🌟", "🔭", "🚀", "🛸",
 ] as const;
 
+/** 자유 드로잉(F3.2 stretch) — 한 획. points는 카드 대비 0..1 상대 좌표. */
+export interface Stroke {
+  color: string;
+  width: number;
+  points: { x: number; y: number }[];
+}
+
+/** 드로잉 펜 색 팔레트(토큰 값). */
+export const PEN_COLORS = ["#a8b5ff", "#ffd479", "#7c6cff", "#ff9ecb", "#ffffff"] as const;
+
 /** localStorage에 저장되는 하나의 "우주" 저널 항목. */
 export interface SavedUniverse {
   /** `${inputDate}:${occasion}` 조합 키 — 무의존·중복 방지 */
@@ -106,6 +116,8 @@ export interface SavedUniverse {
   reactions?: string[];
   /** F3.2 — 카드 위 스티커 장식(선택) */
   stickers?: Sticker[];
+  /** F3.2 stretch — 자유 드로잉 획(선택) */
+  drawing?: Stroke[];
 }
 
 /** 기간 회고(F2.3) — Claude 생성 요약. */

@@ -1,10 +1,17 @@
 import { useRef, useState } from "react";
-import type { ApodResponse, MoodKey, SavedUniverse, Sticker } from "../lib/types";
-import { MOODS, DAY_TYPES, STICKERS } from "../lib/types";
+import type {
+  ApodResponse,
+  MoodKey,
+  SavedUniverse,
+  Sticker,
+  Stroke,
+} from "../lib/types";
+import { MOODS, DAY_TYPES, STICKERS, PEN_COLORS } from "../lib/types";
 import { removeUniverse, saveUniverse } from "../lib/collection";
 import { tap } from "../lib/haptics";
 import CosmicCard from "../components/CosmicCard";
 import StickerLayer from "../components/StickerLayer";
+import DrawLayer from "../components/DrawLayer";
 import ShareActionBar from "../components/ShareActionBar";
 
 const MOOD_BG: Record<MoodKey, string> = {
@@ -26,9 +33,12 @@ export default function Detail({ universe, onBack, onRemoved }: Props) {
   const cardRef = useRef<HTMLElement>(null);
   const [confirming, setConfirming] = useState(false);
 
-  // F3.2 스티커 꾸미기
+  // F3.2 스티커/드로잉 꾸미기
   const [editing, setEditing] = useState(false);
+  const [tool, setTool] = useState<"sticker" | "draw">("sticker");
   const [stickers, setStickers] = useState<Sticker[]>(universe.stickers ?? []);
+  const [drawing, setDrawing] = useState<Stroke[]>(universe.drawing ?? []);
+  const [penColor, setPenColor] = useState<string>(PEN_COLORS[0]);
   const [savingDeco, setSavingDeco] = useState(false);
 
   function addSticker(emoji: string) {
@@ -41,7 +51,7 @@ export default function Detail({ universe, onBack, onRemoved }: Props) {
 
   async function saveDeco() {
     setSavingDeco(true);
-    await saveUniverse({ ...universe, stickers });
+    await saveUniverse({ ...universe, stickers, drawing });
     tap([10, 30, 10]);
     setSavingDeco(false);
     setEditing(false);
@@ -49,6 +59,7 @@ export default function Detail({ universe, onBack, onRemoved }: Props) {
 
   function cancelDeco() {
     setStickers(universe.stickers ?? []);
+    setDrawing(universe.drawing ?? []);
     setEditing(false);
   }
 
@@ -94,37 +105,112 @@ export default function Detail({ universe, onBack, onRemoved }: Props) {
           storyLoading={false}
           storyError={null}
           overlay={
-            <StickerLayer
-              stickers={stickers}
-              editing={editing}
-              onMove={(i, x, y) =>
-                setStickers((prev) =>
-                  prev.map((s, j) => (j === i ? { ...s, x, y } : s))
-                )
-              }
-              onRemove={(i) =>
-                setStickers((prev) => prev.filter((_, j) => j !== i))
-              }
-            />
+            <>
+              <DrawLayer
+                strokes={drawing}
+                drawing={editing && tool === "draw"}
+                color={penColor}
+                width={3}
+                onCommit={(s) => setDrawing((prev) => [...prev, s])}
+              />
+              <StickerLayer
+                stickers={stickers}
+                editing={editing && tool === "sticker"}
+                onMove={(i, x, y) =>
+                  setStickers((prev) =>
+                    prev.map((s, j) => (j === i ? { ...s, x, y } : s))
+                  )
+                }
+                onRemove={(i) =>
+                  setStickers((prev) => prev.filter((_, j) => j !== i))
+                }
+              />
+            </>
           }
         />
 
         {editing ? (
           <div className="w-full max-w-md space-y-3">
-            <div className="glass flex flex-wrap justify-center gap-1.5 rounded-card p-3">
-              {STICKERS.map((s) => (
+            <div className="flex justify-center">
+              <div className="glass inline-flex gap-1 rounded-control p-1">
                 <button
-                  key={s}
-                  onClick={() => addSticker(s)}
-                  className="h-10 w-10 rounded-control text-xl transition hover:bg-white/10 active:animate-jelly"
+                  onClick={() => setTool("sticker")}
+                  aria-pressed={tool === "sticker"}
+                  className={`rounded-[10px] px-3.5 py-1.5 text-sm transition ${
+                    tool === "sticker"
+                      ? "bg-cosmos-accent font-semibold text-white"
+                      : "text-slate-300 hover:bg-white/5"
+                  }`}
                 >
-                  {s}
+                  🌟 스티커
                 </button>
-              ))}
+                <button
+                  onClick={() => setTool("draw")}
+                  aria-pressed={tool === "draw"}
+                  className={`rounded-[10px] px-3.5 py-1.5 text-sm transition ${
+                    tool === "draw"
+                      ? "bg-cosmos-accent font-semibold text-white"
+                      : "text-slate-300 hover:bg-white/5"
+                  }`}
+                >
+                  ✏️ 그리기
+                </button>
+              </div>
             </div>
-            <p className="text-center text-xs text-slate-400">
-              스티커를 눌러 추가하고, 드래그해 옮기세요. ✕로 삭제.
-            </p>
+
+            {tool === "sticker" ? (
+              <>
+                <div className="glass flex flex-wrap justify-center gap-1.5 rounded-card p-3">
+                  {STICKERS.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => addSticker(s)}
+                      className="h-10 w-10 rounded-control text-xl transition hover:bg-white/10 active:animate-jelly"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-center text-xs text-slate-400">
+                  스티커를 눌러 추가하고, 드래그해 옮기세요. ✕로 삭제.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="glass flex flex-wrap items-center justify-center gap-2.5 rounded-card p-3">
+                  {PEN_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setPenColor(c)}
+                      aria-label="펜 색상"
+                      aria-pressed={penColor === c}
+                      className={`h-7 w-7 rounded-full transition ${
+                        penColor === c
+                          ? "ring-2 ring-white ring-offset-2 ring-offset-cosmos-900"
+                          : "opacity-80 hover:opacity-100"
+                      }`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                  <span className="mx-0.5 h-6 w-px bg-white/15" />
+                  <button
+                    onClick={() => setDrawing((p) => p.slice(0, -1))}
+                    className="rounded-control border border-white/15 px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/10"
+                  >
+                    되돌리기
+                  </button>
+                  <button
+                    onClick={() => setDrawing([])}
+                    className="rounded-control border border-white/15 px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/10"
+                  >
+                    전체 지우기
+                  </button>
+                </div>
+                <p className="text-center text-xs text-slate-400">
+                  카드 위에 손가락(또는 마우스)으로 그려보세요.
+                </p>
+              </>
+            )}
             <div className="flex gap-3">
               <button
                 onClick={cancelDeco}
@@ -178,7 +264,7 @@ export default function Detail({ universe, onBack, onRemoved }: Props) {
           onClick={() => setEditing(true)}
           className="text-sm text-cosmos-glow transition hover:text-white active:animate-jelly"
         >
-          🎨 스티커로 꾸미기
+          🎨 스티커·그림으로 꾸미기
         </button>
 
         {confirming ? (

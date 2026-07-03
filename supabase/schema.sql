@@ -140,3 +140,5 @@ end $$;
 -- 미실행 시에도 스티커 없는 저장은 정상. 스티커를 붙인 저장의 클라우드 동기화만 이 컬럼 필요.
 -- ============================================================
 alter table universes add column if not exists stickers jsonb not null default '[]'::jsonb;
+-- 자유 드로잉(F3.2 stretch)
+alter table universes add column if not exists drawing jsonb not null default '[]'::jsonb;

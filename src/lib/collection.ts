@@ -76,8 +76,9 @@ function toRow(u: SavedUniverse, userId: string): Record<string, any> {
     day_type: u.dayType ?? null,
     reactions: u.reactions ?? [],
     saved_at: u.savedAt || new Date().toISOString(),
-    // stickers는 값이 있을 때만 포함 → 마이그레이션 전에도 스티커 없는 저장은 깨지지 않음
+    // stickers/drawing은 값이 있을 때만 포함 → 마이그레이션 전에도 장식 없는 저장은 깨지지 않음
     ...(u.stickers?.length ? { stickers: u.stickers } : {}),
+    ...(u.drawing?.length ? { drawing: u.drawing } : {}),
   };
 }
 
@@ -98,6 +99,7 @@ function fromRow(r: Record<string, any>): SavedUniverse {
     dayType: r.day_type ?? undefined,
     reactions: Array.isArray(r.reactions) ? r.reactions : [],
     stickers: Array.isArray(r.stickers) ? r.stickers : undefined,
+    drawing: Array.isArray(r.drawing) ? r.drawing : undefined,
     savedAt: r.saved_at,
   };
 }
