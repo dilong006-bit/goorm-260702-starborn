@@ -14,6 +14,8 @@ export default {
           accent: "#7c6cff", // 성운 보라 (primary accent)
           glow: "#a8b5ff", // 별빛 하이라이트
           star: "#ffd479", // 별 골드 (절제해서 포인트로만)
+          nebula1: "#7c6cff", // 성운 오브 A (보라)
+          nebula2: "#4f7cff", // 성운 오브 B (블루)
         },
         // occasion 태그 색 (SSOT)
         occasion: {
@@ -36,6 +38,16 @@ export default {
       backgroundImage: {
         "cosmos-radial":
           "radial-gradient(circle at 30% 20%, #1c2350 0%, #0a0e24 45%, #05060f 100%)",
+        // 성운 오브 — glass가 굴절할 빛샘 (§5.1)
+        "nebula-orb":
+          "radial-gradient(circle, rgba(124,108,255,.35) 0%, transparent 70%)",
+        "nebula-orb-blue":
+          "radial-gradient(circle, rgba(79,124,255,.30) 0%, transparent 70%)",
+      },
+      transitionDuration: {
+        micro: "140ms",
+        std: "240ms",
+        expr: "380ms",
       },
       borderRadius: {
         card: "24px",
@@ -66,6 +78,11 @@ export default {
           "0%,100%": { opacity: "1" },
           "50%": { opacity: ".4" },
         },
+        // C2 숨쉬는 우주 배경 — 아주 느린 팽창/수축
+        breathe: {
+          "0%,100%": { transform: "scale(1)", opacity: ".9" },
+          "50%": { transform: "scale(1.06)", opacity: "1" },
+        },
         shimmer: {
           "100%": { transform: "translateX(100%)" },
         },
@@ -86,6 +103,7 @@ export default {
         "card-in": "cardIn .5s cubic-bezier(.2,0,0,1) both",
         "rise-in": "riseIn .42s cubic-bezier(.2,0,0,1) both",
         twinkle: "twinkle 1.6s ease-in-out infinite",
+        breathe: "breathe 10s ease-in-out infinite", // 4s 흡기 / 6s 호기 근사
         shimmer: "shimmer 1.4s infinite",
         "save-pop": "savePop .32s cubic-bezier(.3,0,0,1) both",
         jelly: "jelly .28s cubic-bezier(.3,0,0,1) both",

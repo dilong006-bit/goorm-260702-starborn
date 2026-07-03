@@ -30,7 +30,15 @@
   }
 }
 
-/* 모션 민감 사용자: 등장/반짝임 전부 off (접근성) */
+/* 투명/고대비 선호: glass를 solid cosmos-800로 스왑 (가독성·성능) */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .glass,
+  .glass-strong {
+    @apply border-white/15 bg-cosmos-800 backdrop-blur-none;
+  }
+}
+
+/* 모션 민감 사용자: 등장/반짝임/숨쉬기 전부 off (접근성) */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -38,5 +46,8 @@
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+  .animate-breathe {
+    animation: none !important; /* 숨쉬기도 정지 */
   }
 }
