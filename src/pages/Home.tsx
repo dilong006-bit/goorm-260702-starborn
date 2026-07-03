@@ -4,6 +4,7 @@ import type { ApodResponse, Tone } from "../lib/types";
 import { hasCollection } from "../lib/collection";
 import CosmicCard from "../components/CosmicCard";
 import Loader from "../components/Loader";
+import StreakBadge from "../components/StreakBadge";
 
 const DEFAULT_TONE: Tone = "essay";
 
@@ -19,10 +20,8 @@ const FALLBACK_NOTICE: Record<string, string> = {
 
 export default function Home({
   onOpenBirthday,
-  onOpenCollection,
 }: {
   onOpenBirthday: () => void;
-  onOpenCollection: () => void;
 }) {
   const [apod, setApod] = useState<ApodResponse | null>(null);
   const [apodLoading, setApodLoading] = useState(true);
@@ -67,13 +66,21 @@ export default function Home({
 
   return (
     <main className="flex min-h-screen flex-col items-center px-5 py-10">
-      <header className="mb-8 text-center">
+      <header className="mb-8 flex flex-col items-center text-center">
         <p className="text-xs uppercase tracking-[0.3em] text-cosmos-glow/70">
           Starborn
         </p>
         <h1 className="mt-1 bg-gradient-to-r from-cosmos-glow to-cosmos-accent bg-clip-text text-3xl font-bold text-transparent sm:text-4xl">
           오늘의 우주
         </h1>
+        {hasCollection() ? (
+          <p className="mt-2 text-sm text-slate-400">
+            오늘의 우주가 도착했어요 ✨ 다시 만나서 반가워요.
+          </p>
+        ) : null}
+        <div className="mt-3">
+          <StreakBadge />
+        </div>
       </header>
 
       {apodLoading ? (
@@ -112,14 +119,6 @@ export default function Home({
             >
               🎂 내 생일의 우주 보기
             </button>
-            {hasCollection() && (
-              <button
-                onClick={onOpenCollection}
-                className="rounded-control border border-white/15 px-6 py-3 font-semibold text-slate-200 transition hover:bg-white/10 active:animate-jelly"
-              >
-                ⭐ 내 우주
-              </button>
-            )}
           </div>
         </div>
       )}
