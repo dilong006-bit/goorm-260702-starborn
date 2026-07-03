@@ -25,8 +25,8 @@
 | **⭐ 내 우주에 저장** | 결과 카드를 로컬 컬렉션에 저장(활성화 이벤트) · optimistic · 저장 애니메이션 | ✅ |
 | **공유 · 이미지 · 링크** | 카드를 PNG로 내보내기(`html-to-image`) · Web Share · 딥링크 복사 | ✅ |
 | **내 우주 컬렉션** | 저장한 우주 bento 그리드 · occasion 필터 · 🔥연속 저장일 · 상세/삭제 | ✅ |
-| 비주얼 고도화(starfield·breathe·Pretendard) | (S4 예정) | ⏳ |
-| TabBar · 첫 화면 분기 | (S5 예정) | ⏳ |
+| **숨쉬는 우주 배경** | starfield(box-shadow·로드 0)+nebula 오브·breathe·Pretendard·glass 폴백 | ✅ |
+| **셸 · 첫 화면 분기** | 하단 TabBar(오늘·추가·내우주)·신규→추가/재방문→오늘·재방문 넛지 | ✅ |
 
 **동작 방식**: 날짜 입력 → `/api/apod`가 NASA에서 그날 우주 사진을 가져오고
 (날짜 클램프·video/미발행 폴백·Supabase 캐싱) → `/api/story`가 사진의 제목·설명을
@@ -132,6 +132,7 @@ starborn/
 ├─ src/
 │  ├─ components/        # CosmicCard(캡처 ref) · ShareActionBar · Toast
 │  │                     # CollectionCard · CollectionEmpty · StreakBadge · OccasionTag
+│  │                     # StarfieldBg(숨쉬는 배경) · TabBar(오늘·추가·내우주)
 │  │                     # ToneToggle · DateField · Loader
 │  ├─ pages/             # Home(오늘) · Birthday(입력) · Result(결과)
 │  │                     # Collection(내 우주) · Detail(우주 상세)
