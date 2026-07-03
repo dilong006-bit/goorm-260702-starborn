@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getApod, getStory } from "../lib/api";
-import type { ApodResponse, Tone } from "../lib/types";
-import { hasCollection } from "../lib/collection";
+import type { ApodResponse, SavedUniverse, Tone } from "../lib/types";
+import { hasCollection, getOnThisDay } from "../lib/collection";
+import { proxied } from "../lib/share";
 import CosmicCard from "../components/CosmicCard";
 import Loader from "../components/Loader";
 import StreakBadge from "../components/StreakBadge";
@@ -20,9 +21,13 @@ const FALLBACK_NOTICE: Record<string, string> = {
 
 export default function Home({
   onOpenBirthday,
+  onOpenSaved,
 }: {
   onOpenBirthday: () => void;
+  onOpenSaved: (u: SavedUniverse) => void;
 }) {
+  // On This Day(F2.2) — 오늘과 같은 월·일의 과거 우주
+  const onThisDay = useMemo(() => getOnThisDay(), []);
   const [apod, setApod] = useState<ApodResponse | null>(null);
   const [apodLoading, setApodLoading] = useState(true);
   const [apodError, setApodError] = useState(false);
@@ -82,6 +87,46 @@ export default function Home({
           <StreakBadge />
         </div>
       </header>
+
+      {/* On This Day — 그날의 우주 */}
+      {onThisDay.length > 0 && (
+        <section className="mb-8 w-full max-w-md animate-rise-in">
+          <p className="mb-2 text-sm font-medium text-cosmos-star">
+            🌠 그날의 우주 · On This Day
+          </p>
+          <div className="flex flex-col gap-2">
+            {onThisDay.slice(0, 2).map((u) => {
+              const yearsAgo =
+                new Date().getFullYear() - Number(u.inputDate.slice(0, 4));
+              return (
+                <button
+                  key={u.id}
+                  onClick={() => onOpenSaved(u)}
+                  className="glass flex items-center gap-3 rounded-card p-2.5 text-left transition active:animate-jelly hover:shadow-glow"
+                >
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-control bg-cosmos-900">
+                    {u.imageUrl && (
+                      <img
+                        src={proxied(u.imageUrl) ?? undefined}
+                        alt={u.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-slate-100">
+                      {yearsAgo > 0 ? `${yearsAgo}년 전 오늘` : "지난날의 오늘"}
+                    </p>
+                    <p className="truncate text-xs text-slate-400">{u.title}</p>
+                  </div>
+                  <span className="text-slate-500">→</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {apodLoading ? (
         <Loader label="오늘의 우주를 불러오는 중…" />

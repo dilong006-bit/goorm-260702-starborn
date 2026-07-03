@@ -177,6 +177,23 @@ function localDayKey(d: Date): string {
 }
 
 /**
+ * On This Day(F2.2) — 오늘과 (월,일)이 같은 과거 저장분(연도 무관, 오늘 날짜 제외).
+ * 미러 기준(동기). 최신 inputDate 순.
+ */
+export function getOnThisDay(): SavedUniverse[] {
+  const now = new Date();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const today = localDayKey(now);
+  return getLocal()
+    .filter((u) => {
+      const p = u.inputDate?.split("-");
+      return p?.length === 3 && p[1] === mm && p[2] === dd && u.inputDate !== today;
+    })
+    .sort((a, b) => b.inputDate.localeCompare(a.inputDate));
+}
+
+/**
  * 연속 저장일(스트릭) — 미러 기준(동기).
  * 오늘 저장이 없어도 어제까지 이어졌으면 유지(하루 유예).
  */

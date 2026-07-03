@@ -119,7 +119,12 @@ export default function App() {
       );
       break;
     default:
-      page = <Home onOpenBirthday={() => setView({ name: "input" })} />;
+      page = (
+        <Home
+          onOpenBirthday={() => setView({ name: "input" })}
+          onOpenSaved={(saved) => setView({ name: "detail", saved })}
+        />
+      );
   }
 
   return (
