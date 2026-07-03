@@ -8,10 +8,10 @@
 > *감정 성좌*를 쌓아갑니다. 활성화 이벤트 = *"첫 우주를 컬렉션에 저장"*, 북극성 지표 =
 > *"저장 → 7일 내 재방문"*.
 >
-> **v2 Phase 1(감정 저널)**: 매직링크 로그인 + 클라우드 동기화(익명 localStorage ↔
-> Supabase) + SaveSheet(mood/한 줄/dayType/리액션). ⚠️ 로그인·동기화는
-> [Supabase 대시보드 설정](docs/phase1-supabase-setup.md) 후 활성화됩니다 —
-> **설정 전에도 앱은 익명 모드로 완전히 동작**합니다.
+> **v2 Phase 1–2(감정 저널)**: 매직링크 로그인 + 클라우드 동기화(익명 localStorage ↔
+> Supabase, [설정 가이드](docs/phase1-supabase-setup.md)) + SaveSheet(mood/한 줄/dayType/리액션)
+> + **감정 성좌·On This Day·우주적 회고**. 로그인 없이도 익명 모드로 완전히 동작하며,
+> 로그인 시 여러 기기에서 컬렉션이 동기화됩니다.
 
 ### 🌐 라이브: **https://starborn-one.vercel.app**
 
@@ -34,8 +34,10 @@
 | **숨쉬는 우주 배경** | starfield(box-shadow·로드 0)+nebula 오브·breathe·Pretendard·glass 폴백 | ✅ |
 | **셸 · 첫 화면 분기** | 하단 TabBar(오늘·추가·내우주)·신규→추가/재방문→오늘·재방문 넛지 | ✅ |
 | **감정 기록(SaveSheet)** | 저장 시 mood 5·한 줄(≤140)·dayType 5·리액션 — story는 불변(별기) | ✅ |
-| **로그인·클라우드 동기화** | 매직링크 + 익명 localStorage ↔ Supabase 마이그레이션 (RLS) | ⚙️ 설정 후 |
-| 감정 성좌 · On This Day · 회고 | (Phase 2) | ⏳ |
+| **로그인·클라우드 동기화** | 매직링크 + 익명 localStorage ↔ Supabase 마이그레이션 (RLS) | ✅ |
+| **감정 성좌** | 저장한 우주가 mood 색 별이 되어 이어지는 성좌(SVG·필터·탭→상세) | ✅ |
+| **On This Day** | 오늘과 같은 월·일의 과거 우주를 홈 상단에 소환 | ✅ |
+| **우주적 회고** | 주/월 감정 분포를 Claude가 다정한 회고로 요약(`/api/retrospective`) | ✅ |
 | 목소리 선택(멀티 LLM) · 스티커 · 추세 | (Phase 3) | ⏳ |
 
 **동작 방식**: 날짜 입력 → `/api/apod`가 NASA에서 그날 우주 사진을 가져오고
@@ -137,6 +139,7 @@ starborn/
 │  ├─ apod.js            # NASA APOD 조회·정규화·폴백·캐싱
 │  ├─ story.js           # Claude 스토리 생성·캐싱·이름 치환
 │  ├─ image.js           # NASA 이미지 same-origin 프록시(캡처 taint 방지)
+│  ├─ retrospective.js   # JWT 검증→기간 조회→Claude 회고→저장(F2.3)
 │  └─ _lib/              # nasa / claude / apodNormalize / storyTemplate / supabaseAdmin
 ├─ supabase/schema.sql   # DB 스키마(DDL)
 ├─ src/
@@ -145,8 +148,8 @@ starborn/
 │  │                     # StarfieldBg(숨쉬는 배경) · TabBar(오늘·추가·내우주)
 │  │                     # SaveSheet(mood/한줄/dayType) · AuthSheet(매직링크)
 │  │                     # ToneToggle · DateField · Loader
-│  ├─ pages/             # Home(오늘) · Birthday(입력) · Result(결과)
-│  │                     # Collection(내 우주) · Detail(우주 상세)
+│  ├─ pages/             # Home(오늘·On This Day) · Birthday(입력) · Result(결과)
+│  │                     # Collection(내 우주) · Detail · Constellation(감정 성좌) · Retrospective(회고)
 │  ├─ lib/               # api.ts · types.ts · supabaseClient.ts
 │  │                     # collection.ts(async 어댑터: 로컬↔Supabase) · auth.ts(매직링크)
 │  │                     # metrics.ts(북극성 지표) · share.ts · calm.ts · haptics.ts
