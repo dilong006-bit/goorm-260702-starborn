@@ -120,3 +120,32 @@ export async function insertRetrospective(row) {
     console.error("[supabaseAdmin] insertRetrospective error:", error.message);
   }
 }
+
+// ── v2 F3.3 추세(내부용 집계) ───────────────────────────
+export async function getRecentGenerationLog(limit = 2000) {
+  if (!admin) return [];
+  const { data, error } = await admin
+    .from("generation_log")
+    .select("tone, voice, provider, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error("[supabaseAdmin] getRecentGenerationLog error:", error.message);
+    return [];
+  }
+  return data || [];
+}
+
+export async function getRecentShareEvents(limit = 2000) {
+  if (!admin) return [];
+  const { data, error } = await admin
+    .from("share_events")
+    .select("channel, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error("[supabaseAdmin] getRecentShareEvents error:", error.message);
+    return [];
+  }
+  return data || [];
+}

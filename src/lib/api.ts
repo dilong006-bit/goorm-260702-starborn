@@ -47,6 +47,21 @@ export interface RetrospectiveResult {
   count?: number;
 }
 
+export interface TrendsResult {
+  total: number;
+  tone: Record<string, number>;
+  voice: Record<string, number>;
+  provider: Record<string, number>;
+  genByDay: Record<string, number>;
+  share: { total: number; channel: Record<string, number> };
+}
+
+/** 내부용 추세 집계(F3.3). */
+export async function getTrends(): Promise<TrendsResult> {
+  const res = await fetch("/api/trends");
+  return parse<TrendsResult>(res);
+}
+
 /** 기간 회고 생성(F2.3) — 로그인 access_token 필요. */
 export async function getRetrospective(
   period: "week" | "month",

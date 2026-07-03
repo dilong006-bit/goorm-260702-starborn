@@ -1,3 +1,5 @@
+import { supabase } from "./supabaseClient";
+
 /**
  * 북극성 지표(F1.5) — "저장 → 7일 내 재방문" 경량 계측.
  * Phase 1은 클라이언트(localStorage)만. 서버 집계는 Phase 3(F3.3).
@@ -32,6 +34,25 @@ export function recordSave(): void {
     const list: string[] = JSON.parse(localStorage.getItem(SAVES) ?? "[]");
     list.push(new Date().toISOString());
     localStorage.setItem(SAVES, JSON.stringify(list.slice(-200)));
+  } catch {
+    // 무시
+  }
+}
+
+/** 공유 이벤트 기록(F3.3 추세용). anon RLS INSERT 허용. 실패 무시. */
+export function recordShareEvent(
+  apodDate: string | null,
+  tone: string,
+  channel: "download" | "webshare" | "copylink"
+): void {
+  try {
+    void supabase
+      ?.from("share_events")
+      .insert({ apod_date: apodDate, tone, channel })
+      .then(
+        () => {},
+        () => {}
+      );
   } catch {
     // 무시
   }

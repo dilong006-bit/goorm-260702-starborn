@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { SavedUniverse } from "../lib/types";
 import { saveUniverse, removeUniverse, isSaved } from "../lib/collection";
-import { recordSave } from "../lib/metrics";
+import { recordSave, recordShareEvent } from "../lib/metrics";
 import { deepLink, downloadCard, shareCard } from "../lib/share";
 import { tap } from "../lib/haptics";
 import Toast from "./Toast";
@@ -62,6 +62,7 @@ export default function ShareActionBar({ saved, getNode, showSave = true }: Prop
     setBusy(true);
     try {
       await downloadCard(node, `starborn-${saved.inputDate}.png`);
+      recordShareEvent(saved.apodDate, saved.tone, "download");
       setToast("이미지를 저장했어요");
     } catch {
       setToast("이미지를 만들지 못했어요");
@@ -76,6 +77,7 @@ export default function ShareActionBar({ saved, getNode, showSave = true }: Prop
     setBusy(true);
     try {
       const result = await shareCard(node, link, `${saved.title} · Starborn`);
+      recordShareEvent(saved.apodDate, saved.tone, "webshare");
       if (result === "copied") setToast("링크를 복사했어요");
     } catch {
       setToast("공유하지 못했어요");
@@ -87,6 +89,7 @@ export default function ShareActionBar({ saved, getNode, showSave = true }: Prop
   async function onCopyLink() {
     try {
       await navigator.clipboard.writeText(link);
+      recordShareEvent(saved.apodDate, saved.tone, "copylink");
       tap(6);
       setToast("링크를 복사했어요");
     } catch {

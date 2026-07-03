@@ -5,6 +5,8 @@ import { authAvailable, signInWithMagicLink, signOut } from "../lib/auth";
 interface Props {
   session: Session | null;
   onClose: () => void;
+  /** (내부) 추세 대시보드 열기 */
+  onTrends?: () => void;
 }
 
 type Phase = "form" | "sending" | "sent" | "error";
@@ -14,7 +16,7 @@ type Phase = "form" | "sending" | "sent" | "error";
  * - 로그인 상태: 이메일 표시 + 로그아웃.
  * - Supabase 미설정(authAvailable=false): "곧 제공" 안내(설정 전에도 앱은 익명으로 정상).
  */
-export default function AuthSheet({ session, onClose }: Props) {
+export default function AuthSheet({ session, onClose, onTrends }: Props) {
   const [email, setEmail] = useState("");
   const [phase, setPhase] = useState<Phase>("form");
   const [errMsg, setErrMsg] = useState("");
@@ -80,6 +82,17 @@ export default function AuthSheet({ session, onClose }: Props) {
             >
               로그아웃
             </button>
+            {onTrends && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onTrends();
+                }}
+                className="mt-3 w-full text-center text-xs text-slate-500 transition hover:text-slate-300"
+              >
+                📊 추세 (내부)
+              </button>
+            )}
           </div>
         ) : phase === "sent" ? (
           <div className="py-2 text-center">
