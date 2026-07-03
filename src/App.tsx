@@ -13,6 +13,7 @@ import Birthday from "./pages/Birthday";
 import Result from "./pages/Result";
 import Collection from "./pages/Collection";
 import Detail from "./pages/Detail";
+import Constellation from "./pages/Constellation";
 import StarfieldBg from "./components/StarfieldBg";
 import TabBar, { type TabKey } from "./components/TabBar";
 import AuthSheet from "./components/AuthSheet";
@@ -22,7 +23,8 @@ type View =
   | { name: "input" }
   | { name: "result"; date: string; userName: string }
   | { name: "collection" }
-  | { name: "detail"; saved: SavedUniverse };
+  | { name: "detail"; saved: SavedUniverse }
+  | { name: "constellation" };
 
 // TabBar가 지속 노출되는 최상위 화면(오늘/추가/내우주). result·detail은 push(뒤로가기).
 const TAB_VIEWS = new Set(["home", "input", "collection"]);
@@ -106,6 +108,16 @@ export default function App() {
           onBack={() => setView({ name: "home" })}
           onAdd={() => setView({ name: "input" })}
           onOpen={(saved) => setView({ name: "detail", saved })}
+          onConstellation={() => setView({ name: "constellation" })}
+        />
+      );
+      break;
+    case "constellation":
+      page = (
+        <Constellation
+          onBack={() => setView({ name: "collection" })}
+          onOpen={(saved) => setView({ name: "detail", saved })}
+          onAdd={() => setView({ name: "input" })}
         />
       );
       break;

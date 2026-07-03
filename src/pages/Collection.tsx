@@ -21,9 +21,15 @@ interface Props {
   onBack: () => void;
   onAdd: () => void;
   onOpen: (u: SavedUniverse) => void;
+  onConstellation: () => void;
 }
 
-export default function Collection({ onBack, onAdd, onOpen }: Props) {
+export default function Collection({
+  onBack,
+  onAdd,
+  onOpen,
+  onConstellation,
+}: Props) {
   // 즉시 미러로 첫 렌더 → 원격(로그인 시) 로드로 갱신
   const [all, setAll] = useState<SavedUniverse[]>(() => getLocalCollection());
   const [filter, setFilter] = useState<Occasion | "all">("all");
@@ -76,6 +82,13 @@ export default function Collection({ onBack, onAdd, onOpen }: Props) {
         <CollectionEmpty onAdd={onAdd} />
       ) : (
         <>
+          <button
+            onClick={onConstellation}
+            className="mb-5 w-full rounded-control border border-cosmos-accent/30 bg-cosmos-accent/10 px-5 py-3 text-sm font-medium text-cosmos-glow transition hover:bg-cosmos-accent/15 active:animate-jelly"
+          >
+            ✨ 감정 성좌로 보기
+          </button>
+
           {occasions.length > 1 && (
             <div className="mb-3 flex flex-wrap gap-2">
               <FilterChip
