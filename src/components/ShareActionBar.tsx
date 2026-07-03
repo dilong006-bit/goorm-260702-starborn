@@ -10,9 +10,11 @@ interface Props {
   saved: SavedUniverse;
   /** 캡처할 카드 DOM 노드 */
   getNode: () => HTMLElement | null;
+  /** ⭐저장 버튼 노출 여부(Result는 SaveSheet가 저장을 담당 → false). 기본 true. */
+  showSave?: boolean;
 }
 
-export default function ShareActionBar({ saved, getNode }: Props) {
+export default function ShareActionBar({ saved, getNode, showSave = true }: Props) {
   const [savedOn, setSavedOn] = useState(() => isSaved(saved.id));
   const [pop, setPop] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -29,11 +31,11 @@ export default function ShareActionBar({ saved, getNode }: Props) {
     setTimeout(() => setPop(false), 340);
   }
 
-  function onToggleSave() {
+  async function onToggleSave() {
     if (savedOn) {
       // 저장 해제
       setSavedOn(false);
-      removeUniverse(saved.id);
+      await removeUniverse(saved.id);
       tap(6);
       setToast("컬렉션에서 뺐어요");
       return;
@@ -42,7 +44,7 @@ export default function ShareActionBar({ saved, getNode }: Props) {
     setSavedOn(true);
     firePop();
     tap([10, 30, 10]);
-    saveUniverse({ ...saved, savedAt: new Date().toISOString() });
+    await saveUniverse({ ...saved, savedAt: new Date().toISOString() });
     if (isSaved(saved.id)) {
       setToast("저장됨 ⭐");
     } else {
@@ -92,19 +94,21 @@ export default function ShareActionBar({ saved, getNode }: Props) {
 
   return (
     <div className="flex w-full max-w-md flex-col gap-3">
-      <button
-        onClick={onToggleSave}
-        aria-pressed={savedOn}
-        className={`w-full rounded-control px-6 py-3.5 font-semibold shadow-e1 transition active:animate-jelly ${
-          pop ? "animate-save-pop" : ""
-        } ${
-          savedOn
-            ? "border border-cosmos-accent/40 bg-cosmos-accent/15 text-cosmos-glow"
-            : "bg-cosmos-accent text-white hover:shadow-glow"
-        }`}
-      >
-        {savedOn ? "저장됨 ⭐ 내 우주에 있어요" : "⭐ 내 우주에 저장"}
-      </button>
+      {showSave && (
+        <button
+          onClick={onToggleSave}
+          aria-pressed={savedOn}
+          className={`w-full rounded-control px-6 py-3.5 font-semibold shadow-e1 transition active:animate-jelly ${
+            pop ? "animate-save-pop" : ""
+          } ${
+            savedOn
+              ? "border border-cosmos-accent/40 bg-cosmos-accent/15 text-cosmos-glow"
+              : "bg-cosmos-accent text-white hover:shadow-glow"
+          }`}
+        >
+          {savedOn ? "저장됨 ⭐ 내 우주에 있어요" : "⭐ 내 우주에 저장"}
+        </button>
+      )}
 
       <div className="flex gap-3">
         <button

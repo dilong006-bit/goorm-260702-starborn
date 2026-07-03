@@ -4,7 +4,9 @@ import type { ApodResponse, SavedUniverse, Tone } from "../lib/types";
 import CosmicCard from "../components/CosmicCard";
 import ToneToggle from "../components/ToneToggle";
 import ShareActionBar from "../components/ShareActionBar";
+import SaveSheet from "../components/SaveSheet";
 import Loader from "../components/Loader";
+import { isSaved } from "../lib/collection";
 
 const FALLBACK_NOTICE: Record<string, string> = {
   today_not_published:
@@ -36,6 +38,14 @@ export default function Result({ date, name, onBack, onHome }: Props) {
   const reqId = useRef(0);
   // 카드 캡처 루트(공유 이미지)
   const cardRef = useRef<HTMLElement>(null);
+
+  // 저장 시트 + 저장 상태
+  const savedId = `${date}:birthday`;
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [savedNow, setSavedNow] = useState(false);
+  useEffect(() => {
+    setSavedNow(isSaved(savedId));
+  }, [savedId]);
 
   const loadStory = useCallback(
     async (apodDate: string, t: Tone) => {
@@ -123,11 +133,13 @@ export default function Result({ date, name, onBack, onHome }: Props) {
             onRetryStory={() => void loadStory(apod.date, tone)}
           />
 
-          {/* ⭐저장 + 공유 (활성화 이벤트) — 스토리가 준비된 뒤에만 노출 */}
-          {story && !storyLoading && !storyError && (
-            <ShareActionBar
-              saved={{
-                id: `${date}:birthday`,
+          {/* ⭐저장(SaveSheet) + 공유 (활성화 이벤트) — 스토리 준비 후에만 노출 */}
+          {story &&
+            !storyLoading &&
+            !storyError &&
+            (() => {
+              const base: SavedUniverse = {
+                id: savedId,
                 apodDate: apod.date,
                 inputDate: date,
                 occasion: "birthday",
@@ -138,10 +150,38 @@ export default function Result({ date, name, onBack, onHome }: Props) {
                 imageUrl: apod.imageUrl,
                 story,
                 savedAt: "",
-              } satisfies SavedUniverse}
-              getNode={() => cardRef.current}
-            />
-          )}
+              };
+              return (
+                <div className="flex w-full flex-col items-center gap-3">
+                  {savedNow ? (
+                    <div className="w-full max-w-md rounded-control border border-cosmos-accent/40 bg-cosmos-accent/15 px-6 py-3.5 text-center font-semibold text-cosmos-glow">
+                      저장됨 ⭐ 내 우주에 있어요
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setSheetOpen(true)}
+                      className="w-full max-w-md rounded-control bg-cosmos-accent px-6 py-3.5 font-semibold text-white shadow-e1 transition hover:shadow-glow active:animate-jelly"
+                    >
+                      ⭐ 내 우주에 저장
+                    </button>
+                  )}
+
+                  <ShareActionBar
+                    saved={base}
+                    getNode={() => cardRef.current}
+                    showSave={false}
+                  />
+
+                  {sheetOpen && (
+                    <SaveSheet
+                      base={base}
+                      onClose={() => setSheetOpen(false)}
+                      onSaved={() => setSavedNow(true)}
+                    />
+                  )}
+                </div>
+              );
+            })()}
 
           {/* 바이럴 루프 CTA */}
           <div className="mt-2 flex flex-col items-center gap-3">
