@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import type { SavedUniverse } from "./lib/types";
+import type { ImmersiveSource, SavedUniverse } from "./lib/types";
 import {
   hasCollection,
   setCurrentUser,
@@ -8,6 +8,7 @@ import {
   getCollection,
   clearLocalMirror,
 } from "./lib/collection";
+import { enterDemo, exitDemo } from "./lib/demo";
 import { getCurrentSession, onAuthChange } from "./lib/auth";
 import { touchLastSeen } from "./lib/metrics";
 import Home from "./pages/Home";
@@ -18,12 +19,21 @@ import Detail from "./pages/Detail";
 import StarfieldBg from "./components/StarfieldBg";
 import TabBar, { type TabKey } from "./components/TabBar";
 import AuthSheet from "./components/AuthSheet";
+import DemoBanner from "./components/DemoBanner";
 import Loader from "./components/Loader";
 
 // 이차 화면은 지연 로드(초기 번들 경량화)
 const Constellation = lazy(() => import("./pages/Constellation"));
 const Retrospective = lazy(() => import("./pages/Retrospective"));
 const Trends = lazy(() => import("./pages/Trends"));
+const Immersive = lazy(() => import("./pages/Immersive"));
+
+/** 몰입 감상(Epic A) 오버레이 요청. */
+interface ImmerseReq {
+  source: ImmersiveSource;
+  saveBase?: SavedUniverse;
+  healing?: boolean;
+}
 
 type View =
   | { name: "home" }
@@ -62,6 +72,26 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const prevUser = useRef<string | null>(null);
+
+  // Epic B2 — 둘러보기(데모) 모드 / Epic A — 몰입 감상 오버레이
+  const [demo, setDemo] = useState(false);
+  const [immerse, setImmerse] = useState<ImmerseReq | null>(null);
+
+  const openImmerse = (req: ImmerseReq) => setImmerse(req);
+  const closeImmerse = () => setImmerse(null);
+
+  const browseDemo = () => {
+    enterDemo();
+    setDemo(true);
+    setImmerse(null);
+    setView({ name: "collection" });
+  };
+  const exitDemoMode = () => {
+    exitDemo();
+    setDemo(false);
+    setImmerse(null);
+    setView(hasCollection() ? { name: "home" } : { name: "input" });
+  };
 
   // 북극성 지표(F1.5): 방문 스탬프
   useEffect(() => {
@@ -124,6 +154,7 @@ export default function App() {
           name={view.userName}
           onBack={() => setView({ name: "input" })}
           onHome={() => setView({ name: "home" })}
+          onImmerse={openImmerse}
         />
       );
       break;
@@ -165,6 +196,7 @@ export default function App() {
           universe={view.saved}
           onBack={() => setView({ name: "collection" })}
           onRemoved={() => setView({ name: "collection" })}
+          onImmerse={openImmerse}
         />
       );
       break;
@@ -173,6 +205,8 @@ export default function App() {
         <Home
           onOpenBirthday={() => setView({ name: "input" })}
           onOpenSaved={(saved) => setView({ name: "detail", saved })}
+          onBrowseDemo={browseDemo}
+          onImmerse={openImmerse}
         />
       );
   }
@@ -181,8 +215,11 @@ export default function App() {
     <div className="relative min-h-screen">
       <StarfieldBg />
 
-      {/* 계정/동기화 — 탭 화면에서만 우상단 고정 */}
-      {showTab && (
+      {/* 둘러보기(데모) 배너 — Epic B2 */}
+      {demo && <DemoBanner onExit={exitDemoMode} />}
+
+      {/* 계정/동기화 — 탭 화면에서만 우상단 고정(데모 중엔 숨김) */}
+      {showTab && !demo && (
         <button
           onClick={() => setAuthOpen(true)}
           className="glass fixed right-4 top-4 z-20 rounded-full px-3.5 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/10 active:animate-jelly"
@@ -192,8 +229,11 @@ export default function App() {
         </button>
       )}
 
-      {/* 세션 전환 시 페이지 remount → 컬렉션 재조회 */}
-      <div key={session?.user?.id ?? "anon"} className={showTab ? "pb-20" : ""}>
+      {/* 세션/데모 전환 시 페이지 remount → 컬렉션 재조회 */}
+      <div
+        key={`${session?.user?.id ?? "anon"}:${demo ? "demo" : "real"}`}
+        className={`${showTab ? "pb-20" : ""} ${demo ? "pt-10" : ""}`}
+      >
         <Suspense
           fallback={
             <div className="flex min-h-screen items-center justify-center">
@@ -213,6 +253,19 @@ export default function App() {
           onClose={() => setAuthOpen(false)}
           onTrends={() => setView({ name: "trends" })}
         />
+      )}
+
+      {/* 몰입 감상 오버레이 — Epic A1/A2/A4 */}
+      {immerse && (
+        <Suspense fallback={null}>
+          <Immersive
+            source={immerse.source}
+            saveBase={immerse.saveBase}
+            healing={immerse.healing}
+            onSaved={closeImmerse}
+            onClose={closeImmerse}
+          />
+        </Suspense>
       )}
     </div>
   );

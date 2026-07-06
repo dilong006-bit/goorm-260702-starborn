@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getApod, getStory } from "../lib/api";
-import type { ApodResponse, SavedUniverse, Tone, Voice } from "../lib/types";
+import type {
+  ApodResponse,
+  ImmersiveSource,
+  SavedUniverse,
+  Tone,
+  Voice,
+} from "../lib/types";
 import CosmicCard from "../components/CosmicCard";
 import ToneToggle from "../components/ToneToggle";
 import VoiceToggle from "../components/VoiceToggle";
@@ -23,9 +29,14 @@ interface Props {
   name: string;
   onBack: () => void;
   onHome: () => void;
+  /** 크게 감상(Epic A). */
+  onImmerse: (req: {
+    source: ImmersiveSource;
+    saveBase?: SavedUniverse;
+  }) => void;
 }
 
-export default function Result({ date, name, onBack, onHome }: Props) {
+export default function Result({ date, name, onBack, onHome, onImmerse }: Props) {
   const [apod, setApod] = useState<ApodResponse | null>(null);
   const [apodLoading, setApodLoading] = useState(true);
   const [apodError, setApodError] = useState(false);
@@ -183,6 +194,27 @@ export default function Result({ date, name, onBack, onHome }: Props) {
                     getNode={() => cardRef.current}
                     showSave={false}
                   />
+
+                  {apod.imageUrl && (
+                    <button
+                      onClick={() =>
+                        onImmerse({
+                          source: {
+                            date: apod.date,
+                            title: apod.title,
+                            imageUrl: apod.imageUrl,
+                            hdurl: null,
+                            mediaType: apod.mediaType,
+                            copyright: apod.copyright,
+                          },
+                          saveBase: savedNow ? undefined : base,
+                        })
+                      }
+                      className="w-full max-w-md rounded-control border border-white/15 px-4 py-2.5 text-sm font-medium text-slate-100 transition hover:bg-white/10 active:animate-jelly"
+                    >
+                      🔭 크게 감상하기
+                    </button>
+                  )}
 
                   {sheetOpen && (
                     <SaveSheet

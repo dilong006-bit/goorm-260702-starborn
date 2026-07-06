@@ -1,5 +1,6 @@
 import type { SavedUniverse } from "./types";
 import { supabase } from "./supabaseClient";
+import { isDemo, getDemoCollection } from "./demo";
 
 const KEY = "starborn:collection:v1";
 const MIGRATED_KEY = "starborn:migrated:v1";
@@ -39,7 +40,10 @@ function useRemote(): boolean {
 }
 
 // ── localStorage 미러 (동기) ────────────────────────────
+// 데모(둘러보기) 모드에선 인메모리 시드가 진실원 — 모든 동기 리더(hasCollection·
+// isSaved·getOnThisDay·streakDays·getLocalCollection)가 자동으로 시드를 읽는다.
 function getLocal(): SavedUniverse[] {
+  if (isDemo()) return getDemoCollection();
   try {
     const parsed = JSON.parse(localStorage.getItem(KEY) ?? "[]");
     return Array.isArray(parsed) ? (parsed as SavedUniverse[]) : [];
@@ -123,6 +127,7 @@ function fromRow(r: Record<string, any>): SavedUniverse {
 // ── 공개 async API ──────────────────────────────────────
 /** 컬렉션 전체(최신순). 로그인 시 원격 조회 후 미러 갱신, 아니면 로컬. */
 export async function getCollection(): Promise<SavedUniverse[]> {
+  if (isDemo()) return getDemoCollection(); // 데모: 원격/로컬 접근 없이 시드만
   if (useRemote()) {
     const { data, error } = await supabase!
       .from("universes")
@@ -141,6 +146,7 @@ export async function getCollection(): Promise<SavedUniverse[]> {
 
 /** upsert — 같은 id는 덮어쓰고 최신순 유지. 로컬 미러는 항상 기록, 로그인 시 원격도 기록. */
 export async function saveUniverse(u: SavedUniverse): Promise<void> {
+  if (isDemo()) return; // 데모는 읽기 전용 — 저장 없음
   const stamped: SavedUniverse = {
     ...u,
     savedAt: u.savedAt || new Date().toISOString(),
@@ -156,6 +162,7 @@ export async function saveUniverse(u: SavedUniverse): Promise<void> {
 }
 
 export async function removeUniverse(id: string): Promise<void> {
+  if (isDemo()) return; // 데모는 읽기 전용
   setLocal(getLocal().filter((x) => x.id !== id));
   if (useRemote()) {
     await supabase!
@@ -171,6 +178,7 @@ export async function removeUniverse(id: string): Promise<void> {
  * (id 충돌 시 서버 우선은 별도 정책 없이 upsert; 로컬을 올려 dedupe)
  */
 export async function migrateLocalToRemote(userId: string): Promise<void> {
+  if (isDemo()) return; // 데모 컬렉션은 절대 업로드하지 않는다
   if (!supabase) return;
   if (localStorage.getItem(MIGRATED_KEY) === "true") return;
   const local = getLocal();

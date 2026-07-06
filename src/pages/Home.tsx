@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getApod, getStory } from "../lib/api";
-import type { ApodResponse, SavedUniverse, Tone } from "../lib/types";
+import type { ApodResponse, ImmersiveSource, SavedUniverse, Tone } from "../lib/types";
 import { hasCollection, getOnThisDay } from "../lib/collection";
 import { proxied } from "../lib/share";
 import CosmicCard from "../components/CosmicCard";
@@ -22,9 +22,19 @@ const FALLBACK_NOTICE: Record<string, string> = {
 export default function Home({
   onOpenBirthday,
   onOpenSaved,
+  onBrowseDemo,
+  onImmerse,
 }: {
   onOpenBirthday: () => void;
   onOpenSaved: (u: SavedUniverse) => void;
+  /** 샘플 우주 둘러보기(Epic B2). */
+  onBrowseDemo: () => void;
+  /** 크게 감상 / 힐링 모드(Epic A). */
+  onImmerse: (req: {
+    source: ImmersiveSource;
+    saveBase?: SavedUniverse;
+    healing?: boolean;
+  }) => void;
 }) {
   // On This Day(F2.2) — 오늘과 같은 월·일의 과거 우주
   const onThisDay = useMemo(() => getOnThisDay(), []);
@@ -68,6 +78,31 @@ export default function Home({
   }, [loadToday]);
 
   const notice = apod?.fallback ? FALLBACK_NOTICE[apod.fallback] : null;
+
+  // 크게 감상 / 힐링 모드 진입 — 종료 시 오늘의 우주 저장 브릿지 연결
+  const immerse = (healing: boolean) => {
+    if (!apod) return;
+    const source: ImmersiveSource = {
+      date: apod.date,
+      title: apod.title,
+      imageUrl: apod.imageUrl,
+      hdurl: null,
+      mediaType: apod.mediaType,
+      copyright: apod.copyright,
+    };
+    const saveBase: SavedUniverse = {
+      id: `${apod.date}:today`,
+      apodDate: apod.date,
+      inputDate: apod.date,
+      occasion: "today",
+      tone: DEFAULT_TONE,
+      title: apod.title,
+      imageUrl: apod.imageUrl,
+      story: story ?? "",
+      savedAt: "",
+    };
+    onImmerse({ source, saveBase, healing });
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center px-5 py-10">
@@ -157,6 +192,24 @@ export default function Home({
             onRetryStory={() => void loadStory(apod.date)}
           />
 
+          {/* 크게 감상 / 힐링 모드 — Epic A 진입점 */}
+          {apod.imageUrl && (
+            <div className="flex w-full max-w-md gap-2">
+              <button
+                onClick={() => immerse(false)}
+                className="flex-1 rounded-control border border-white/15 px-4 py-2.5 text-sm font-medium text-slate-100 transition hover:bg-white/10 active:animate-jelly"
+              >
+                🔭 크게 감상
+              </button>
+              <button
+                onClick={() => immerse(true)}
+                className="flex-1 rounded-control border border-cosmos-glow/30 bg-cosmos-glow/10 px-4 py-2.5 text-sm font-medium text-cosmos-glow transition hover:bg-cosmos-glow/15 active:animate-jelly"
+              >
+                🌙 힐링 모드
+              </button>
+            </div>
+          )}
+
           <div className="mt-2 flex flex-wrap justify-center gap-3">
             <button
               onClick={onOpenBirthday}
@@ -167,6 +220,14 @@ export default function Home({
           </div>
         </div>
       )}
+
+      {/* 샘플 우주 둘러보기 — Epic B2(비강제 보조 CTA) */}
+      <button
+        onClick={onBrowseDemo}
+        className="mt-8 text-sm text-slate-400 underline-offset-4 transition hover:text-cosmos-glow hover:underline"
+      >
+        🔭 샘플 우주 둘러보기 →
+      </button>
     </main>
   );
 }

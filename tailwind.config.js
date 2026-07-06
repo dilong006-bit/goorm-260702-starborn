@@ -106,6 +106,23 @@ export default {
           "60%": { transform: "scale(1.03)" },
           "100%": { transform: "scale(1)" },
         },
+        // A2 몰입 모션 — 느린 Ken Burns(팬·줌)
+        kenBurns: {
+          "0%": { transform: "scale(1.06) translate3d(0,0,0)" },
+          "50%": { transform: "scale(1.16) translate3d(-2.2%,-1.6%,0)" },
+          "100%": { transform: "scale(1.06) translate3d(0,0,0)" },
+        },
+        // A2 별 레이어 패럴럭스 드리프트
+        parallax: {
+          "0%": { transform: "translate3d(0,0,0)" },
+          "50%": { transform: "translate3d(1.5%,1%,0)" },
+          "100%": { transform: "translate3d(0,0,0)" },
+        },
+        // A1 크롬 페이드 인
+        fadeIn: {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
       },
       animation: {
         "card-in": "cardIn .5s cubic-bezier(.2,0,0,1) both",
@@ -115,6 +132,11 @@ export default {
         shimmer: "shimmer 1.4s infinite",
         "save-pop": "savePop .32s cubic-bezier(.3,0,0,1) both",
         jelly: "jelly .28s cubic-bezier(.3,0,0,1) both",
+        // A2 — subtle(기본)/full 두 강도, 방향 교차로 살아있는 장면
+        "ken-burns-subtle": "kenBurns 52s ease-in-out infinite",
+        "ken-burns-full": "kenBurns 30s ease-in-out infinite",
+        parallax: "parallax 40s ease-in-out infinite",
+        "fade-in": "fadeIn .5s ease-out both",
       },
     },
   },

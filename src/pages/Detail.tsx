@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import type {
   ApodResponse,
+  ImmersiveSource,
   MoodKey,
   SavedUniverse,
   Sticker,
@@ -8,6 +9,7 @@ import type {
 } from "../lib/types";
 import { MOODS, DAY_TYPES, STICKERS, PEN_COLORS } from "../lib/types";
 import { removeUniverse, saveUniverse } from "../lib/collection";
+import { seedMetaFor } from "../lib/demo";
 import { tap } from "../lib/haptics";
 import CosmicCard from "../components/CosmicCard";
 import StickerLayer from "../components/StickerLayer";
@@ -27,9 +29,11 @@ interface Props {
   onBack: () => void;
   /** 삭제 후 컬렉션으로 */
   onRemoved: () => void;
+  /** 크게 감상(Epic A). */
+  onImmerse: (req: { source: ImmersiveSource }) => void;
 }
 
-export default function Detail({ universe, onBack, onRemoved }: Props) {
+export default function Detail({ universe, onBack, onRemoved, onImmerse }: Props) {
   const cardRef = useRef<HTMLElement>(null);
   const [confirming, setConfirming] = useState(false);
 
@@ -77,6 +81,21 @@ export default function Detail({ universe, onBack, onRemoved }: Props) {
   async function onDelete() {
     await removeUniverse(universe.id);
     onRemoved();
+  }
+
+  // 크게 감상 — 데모 시드는 hd/저작권 메타를 이어붙인다
+  function openImmersive() {
+    const meta = seedMetaFor(universe.apodDate);
+    onImmerse({
+      source: {
+        date: universe.apodDate,
+        title: universe.title,
+        imageUrl: universe.imageUrl,
+        hdurl: meta.hdurl,
+        mediaType: universe.imageUrl ? "image" : "video",
+        copyright: meta.copyright,
+      },
+    });
   }
 
   const mood = universe.mood
@@ -259,6 +278,15 @@ export default function Detail({ universe, onBack, onRemoved }: Props) {
         )}
 
         <ShareActionBar saved={universe} getNode={() => cardRef.current} />
+
+        {universe.imageUrl && (
+          <button
+            onClick={openImmersive}
+            className="w-full max-w-md rounded-control border border-white/15 px-4 py-2.5 text-sm font-medium text-slate-100 transition hover:bg-white/10 active:animate-jelly"
+          >
+            🔭 크게 감상하기
+          </button>
+        )}
 
         <button
           onClick={() => setEditing(true)}

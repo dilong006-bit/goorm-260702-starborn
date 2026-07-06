@@ -12,6 +12,12 @@
 > Supabase, [설정 가이드](docs/phase1-supabase-setup.md)) + SaveSheet(mood/한 줄/dayType/리액션)
 > + **감정 성좌·On This Day·우주적 회고**. 로그인 없이도 익명 모드로 완전히 동작하며,
 > 로그인 시 여러 기기에서 컬렉션이 동기화됩니다.
+>
+> **Enhancement — "Immersive & Showcase"**: ① **둘러보기(데모) 모드** — 로그인·기록
+> 없이 실제 NASA 이미지로 큐레이션된 32개의 샘플 우주(감정 성좌·회고·On This Day가
+> 첫 화면부터 살아있음, 실데이터·지표와 완전 분리), ② **몰입 감상/힐링 모드** — APOD를
+> 풀블리드로 승격(blur-up·Ken Burns 모션)하고 생성형 우주 사운드·호흡 가이드를 얹은 뒤,
+> 종료 시 *"오늘 어땠나요?"* 기록 브릿지로 감상을 저장으로 잇습니다.
 
 ### 🌐 라이브: **https://starborn-one.vercel.app**
 
@@ -39,8 +45,11 @@
 | **On This Day** | 오늘과 같은 월·일의 과거 우주를 홈 상단에 소환 | ✅ |
 | **우주적 회고** | 주/월 감정 분포를 Claude가 다정한 회고로 요약(`/api/retrospective`) | ✅ |
 | **목소리 선택** | 문체 축(따뜻하게·몽환적으로·담백하게) — 톤과 직교, LLM 종류 비노출 | ✅ |
-| **스티커 꾸미기** | 상세 카드에 이모지 스티커 배치·드래그, 저장·공유 이미지 반영 | ✅ |
-| 자유 드로잉 · 추세 대시보드 · 다국어 | (Phase 3 잔여 · i18n은 리텐션 검증 후) | ⏳ |
+| **스티커·드로잉 꾸미기** | 상세 카드에 이모지 스티커 배치·드래그 + 자유 프리핸드 드로잉, 저장·공유 이미지 반영 | ✅ |
+| **둘러보기(데모) 모드** | 로그인·기록 없이 실제 NASA 이미지 32개 큐레이션 샘플 우주 탐험 — 성좌·회고·On This Day가 첫 화면부터 살아있음 (실데이터·지표와 완전 분리, 읽기 전용) | ✅ |
+| **몰입 감상 / 힐링 모드** | APOD 풀블리드 승격(blur-up·Ken Burns 모션·크롬 자동 페이드) + 생성형 우주 사운드 + 호흡 가이드 + 화면유지 + 감상→기록 브릿지 | ✅ |
+| **추세 대시보드(내부용)** | 톤·목소리·프로바이더·공유 채널 집계(`/api/trends`) | ✅ |
+| 다국어(i18n) | (리텐션 검증 후) | ⏳ |
 
 **동작 방식**: 날짜 입력 → `/api/apod`가 NASA에서 그날 우주 사진을 가져오고
 (날짜 클램프·video/미발행 폴백·Supabase 캐싱) → `/api/story`가 사진의 제목·설명을
@@ -62,6 +71,23 @@ Claude에 넘겨 한국어 이야기를 생성(`(날짜+톤)` 캐싱, 이름은 
 - **감각 레이어(opt-in)**: 저장 시 진동 피드백은 progressive enhancement
   (`navigator.vibrate` 지원 기기만, iOS는 무해 no-op). 설정은 `starborn:calm:v1`.
 - **접근성**: 저장 버튼 `aria-pressed`, 이미지 대체텍스트, reduced-motion 존중.
+
+### 몰입 & 쇼케이스 (Immersive & Showcase)
+
+- **둘러보기(데모) 모드** — `src/data/seedUniverse.ts`에 **실제 NASA APOD 이미지 URL**을
+  baking한 32개 큐레이션 시드(로컬 정적 번들, 오프라인 열람 가능). `src/lib/demo.ts`가
+  `isDemo()` 한 스위치로 컬렉션 데이터 계층(`collection.ts`)의 모든 리더를 시드로 스왑하고,
+  저장·삭제·마이그레이션·metrics는 전부 no-op → **실데이터·RLS·지표와 물리적으로 분리**.
+  저장일은 런타임에 오늘 기준으로 상대화되어 **스트릭·On This Day가 언제나 살아있게** 보입니다.
+- **몰입 감상 뷰** — `src/pages/Immersive.tsx`. `hdurl` 우선 + blur-up 플레이스홀더로 지각
+  성능 확보, 3초 무동작 시 크롬 자동 페이드. **모션**은 `image` day에 느린 Ken Burns + 별
+  패럴럭스(강도 off/subtle/full), `prefers-reduced-motion` 시 완전 정지.
+- **앰비언트 사운드** — `src/lib/ambientAudio.ts`. **생성형 Web Audio**(레이어드 패드 +
+  필터드 핑크 노이즈 + 합성 리버브)로 라이선스 부담 0·무한 재생. 브라우저 autoplay 정책
+  준수(사용자 제스처 후 재생, 기본 OFF), 백그라운드 전환 시 자동 페이드.
+- **힐링 모드 + 기록 브릿지** — 호흡 가이드(`animate-breathe` 재사용) + Screen Wake
+  Lock(opt-in·배터리 고지). 세션 종료 시 *"오늘 어땠나요?"* 1탭으로 SaveSheet에 연결해
+  **감상을 기록(활성화)으로** 잇습니다(노벨티 트랩 방지). 설정은 `calm.ts`(motionLevel·keepAwake).
 
 ---
 
@@ -149,13 +175,17 @@ starborn/
 │  │                     # CollectionCard · CollectionEmpty · StreakBadge · OccasionTag
 │  │                     # StarfieldBg(숨쉬는 배경) · TabBar(오늘·추가·내우주)
 │  │                     # SaveSheet(mood/한줄/dayType) · AuthSheet(매직링크)
-│  │                     # ToneToggle · DateField · Loader
+│  │                     # StickerLayer · DrawLayer · DemoBanner(둘러보기)
+│  │                     # ToneToggle · VoiceToggle · DateField · Loader
 │  ├─ pages/             # Home(오늘·On This Day) · Birthday(입력) · Result(결과)
 │  │                     # Collection(내 우주) · Detail · Constellation(감정 성좌) · Retrospective(회고)
+│  │                     # Trends(추세) · Immersive(몰입 감상·힐링 모드)
+│  ├─ data/              # seedUniverse.ts(데모 시드: 실제 APOD 이미지 + 큐레이션 저널)
 │  ├─ lib/               # api.ts · types.ts · supabaseClient.ts
 │  │                     # collection.ts(async 어댑터: 로컬↔Supabase) · auth.ts(매직링크)
 │  │                     # metrics.ts(북극성 지표) · share.ts · calm.ts · haptics.ts
-│  ├─ App.tsx            # 뷰 상태기(home→input→result / collection→detail)
+│  │                     # demo.ts(둘러보기 격리) · ambientAudio.ts(생성형 사운드) · useWakeLock.ts
+│  ├─ App.tsx            # 뷰 상태기(home→input→result / collection→detail / 데모·몰입 오버레이)
 │  └─ main.tsx
 ├─ vite.config.ts        # vercel-api-dev 플러그인(로컬 /api 실행)
 ├─ vercel.json

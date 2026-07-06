@@ -131,9 +131,29 @@ export interface Retrospective {
   createdAt: string;
 }
 
-/** 감각 레이어(햅틱·사운드·젠틀 모드) opt-in 설정. */
+/** 모션 강도(A2) — reduced-motion은 항상 우선(강제 정지). */
+export type MotionLevel = "off" | "subtle" | "full";
+
+/** 감각 레이어(햅틱·사운드·젠틀 모드·모션·화면유지) opt-in 설정. */
 export interface CalmPrefs {
   haptics: boolean;
   ambientSound: boolean;
   gentleMode: boolean;
+  /** A2 몰입 모션 강도 — 기본 subtle. */
+  motionLevel: MotionLevel;
+  /** A4 힐링 세션 중 화면 유지(Screen Wake Lock) — 기본 off(배터리 보호). */
+  keepAwake: boolean;
+}
+
+/**
+ * 몰입 감상(Epic A) 소스 — APOD 응답과 저장된 우주를 공통 형태로 승격.
+ * hdurl은 있으면 대형 감상에 우선 사용(A1), 없으면 imageUrl 폴백.
+ */
+export interface ImmersiveSource {
+  date: string;
+  title: string;
+  imageUrl: string | null;
+  hdurl?: string | null;
+  mediaType: "image" | "video";
+  copyright?: string | null;
 }

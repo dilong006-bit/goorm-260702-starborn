@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient";
+import { isDemo } from "./demo";
 
 /**
  * 북극성 지표(F1.5) — "저장 → 7일 내 재방문" 경량 계측.
@@ -18,6 +19,7 @@ function dayKey(d = new Date()): string {
 
 /** 앱 진입 시 1회 — 오늘 방문일 기록 + 마지막 접속 스탬프. */
 export function touchLastSeen(): void {
+  if (isDemo()) return; // 데모는 지표에서 제외(§7 분리)
   try {
     const set = new Set<string>(JSON.parse(localStorage.getItem(VISITS) ?? "[]"));
     set.add(dayKey());
@@ -30,6 +32,7 @@ export function touchLastSeen(): void {
 
 /** 저장(활성화) 이벤트 기록. */
 export function recordSave(): void {
+  if (isDemo()) return;
   try {
     const list: string[] = JSON.parse(localStorage.getItem(SAVES) ?? "[]");
     list.push(new Date().toISOString());
@@ -45,6 +48,7 @@ export function recordShareEvent(
   tone: string,
   channel: "download" | "webshare" | "copylink"
 ): void {
+  if (isDemo()) return;
   try {
     void supabase
       ?.from("share_events")

@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import type { MoodKey } from "../lib/types";
 import { MOODS } from "../lib/types";
 import { getRetrospective, type RetrospectiveResult } from "../lib/api";
+import { isDemo, getDemoRetrospective } from "../lib/demo";
 
 const MOOD_HEX: Record<MoodKey, string> = {
   radiant: "#ffd479",
@@ -29,9 +30,17 @@ export default function Retrospective({ session, onBack, onOpenAuth }: Props) {
   const reqId = useRef(0);
 
   const token = session?.access_token;
+  const demo = isDemo();
 
   async function generate() {
-    if (!token || phase === "loading") return;
+    if (phase === "loading") return;
+    // 데모(둘러보기): 완성된 회고를 즉시 시연(읽기 전용)
+    if (demo) {
+      setResult(getDemoRetrospective(period));
+      setPhase("done");
+      return;
+    }
+    if (!token) return;
     const id = ++reqId.current;
     setPhase("loading");
     setResult(null);
@@ -65,7 +74,7 @@ export default function Retrospective({ session, onBack, onOpenAuth }: Props) {
         </p>
       </header>
 
-      {!token ? (
+      {!token && !demo ? (
         <div className="glass mt-6 rounded-card p-6 text-center">
           <p className="mb-4 text-slate-200">
             회고는 로그인 후 이용할 수 있어요.

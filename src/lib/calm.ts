@@ -2,11 +2,13 @@ import type { CalmPrefs } from "./types";
 
 const CALM_KEY = "starborn:calm:v1";
 
-/** 기본값: 햅틱 on, 사운드 off(정숙), 젠틀 모드 off. */
+/** 기본값: 햅틱 on, 사운드 off(정숙·autoplay 정책), 젠틀 off, 모션 subtle, 화면유지 off. */
 const DEFAULT_CALM: CalmPrefs = {
   haptics: true,
   ambientSound: false,
   gentleMode: false,
+  motionLevel: "subtle",
+  keepAwake: false,
 };
 
 /** 저장된 감각 설정을 읽는다. 파싱 실패·미설정 시 기본값. */
